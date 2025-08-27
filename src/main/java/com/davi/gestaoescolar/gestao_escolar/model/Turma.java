@@ -33,10 +33,7 @@ public class Turma {
     @Column(nullable = false)
     private Boolean ativo = true;
 
-    // Relacionamento com Escola
-    @ManyToOne
-    @JoinColumn(name = "escola_id", nullable = false)
-    private Escola escola;
+
 
     // Relacionamento com Matriculas
     @OneToMany(mappedBy = "turma", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -62,12 +59,11 @@ public class Turma {
     // Construtores
     public Turma() {}
 
-    public Turma(String nome, String anoLetivo, String semestre, Periodo periodo, Escola escola) {
+    public Turma(String nome, String anoLetivo, String semestre, Periodo periodo) {
         this.nome = nome;
         this.anoLetivo = anoLetivo;
         this.semestre = semestre;
         this.periodo = periodo;
-        this.escola = escola;
     }
 
 

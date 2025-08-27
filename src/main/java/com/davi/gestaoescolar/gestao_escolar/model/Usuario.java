@@ -29,9 +29,7 @@ public class Usuario {
 
     private LocalDateTime ultimoAcesso;
 
-    @ManyToOne
-    @JoinColumn(name = "planejamento_id", nullable = false)
-    private Escola escola;
+
 
     private Boolean ativo = true;
 

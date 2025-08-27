@@ -14,9 +14,5 @@ public interface AlunoRepository extends JpaRepository<Aluno, Long> {
     
     List<Aluno> findByNomeContainingIgnoreCase(String nome);
     
-    List<Aluno> findByEscolaId(Long escolaId);
-    
     List<Aluno> findByAtivoTrue();
-    
-    List<Aluno> findByAtivoTrueAndEscolaId(Long escolaId);
 }

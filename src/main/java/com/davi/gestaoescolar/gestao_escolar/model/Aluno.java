@@ -31,10 +31,7 @@ public class Aluno {
     @Column(nullable = false)
     private Boolean ativo = true;
 
-    // Relacionamento com Escola
-    @ManyToOne
-    @JoinColumn(name = "escola_id", nullable = false)
-    private Escola escola;
+
 
     @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Matricula> matriculas = new ArrayList<>();
@@ -51,11 +48,10 @@ public class Aluno {
     // Construtores
     public Aluno() {}
 
-    public Aluno(String nome, LocalDate dataNascimento, String matricula, Escola escola) {
+    public Aluno(String nome, LocalDate dataNascimento, String matricula) {
         this.nome = nome;
         this.dataNascimento = dataNascimento;
         this.matricula = matricula;
-        this.escola = escola;
     }
 
 

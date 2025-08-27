@@ -12,8 +12,6 @@ public interface TurmaRepository extends JpaRepository<Turma, Long> {
     
     List<Turma> findByNomeContainingIgnoreCase(String nome);
     
-    List<Turma> findByEscolaId(Long escolaId);
-    
     List<Turma> findByAnoLetivo(String anoLetivo);
     
     List<Turma> findBySemestre(String semestre);
@@ -22,9 +20,5 @@ public interface TurmaRepository extends JpaRepository<Turma, Long> {
     
     List<Turma> findByAtivo(Boolean ativo);
     
-    List<Turma> findByEscolaIdAndAtivo(Long escolaId, Boolean ativo);
-    
     List<Turma> findByAnoLetivoAndSemestre(String anoLetivo, String semestre);
-    
-    List<Turma> findByEscolaIdAndAnoLetivoAndSemestre(Long escolaId, String anoLetivo, String semestre);
 }
