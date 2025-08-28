@@ -18,13 +18,12 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     
     List<Usuario> findByAtivo(Boolean ativo);
     
-    List<Usuario> findByEscolaId(Long escolaId);
     
     List<Usuario> findByUltimoAcessoBefore(LocalDateTime data);
     
     List<Usuario> findByUltimoAcessoAfter(LocalDateTime data);
     
-    List<Usuario> findByEscolaIdAndPerfil(Long escolaId, Perfil perfil);
+
     
     List<Usuario> findByPerfilAndAtivo(Perfil perfil, Boolean ativo);
 }
