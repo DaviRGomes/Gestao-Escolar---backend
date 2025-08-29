@@ -7,7 +7,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
-import java.util.Date;
 import java.util.List;
 
 @Entity
@@ -38,8 +37,9 @@ public class Comportamento {
     private Professor professor;
 
 
-    @OneToMany(mappedBy = "comportamento", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Aluno> alunos;
+    @ManyToOne
+    @JoinColumn(name = "aluno_id")
+    private Aluno aluno;
 
 
 }

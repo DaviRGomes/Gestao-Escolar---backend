@@ -7,22 +7,16 @@ import lombok.Setter;
 
 import java.time.LocalDate;
 
-
 @Entity
-@Table(name = "professor")
-@PrimaryKeyJoinColumn(name = "usuario_id")
 @Getter
 @Setter
-public class Professor extends Usuario {
+public class Secretaria extends Usuario {
 
-   @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 100)
     private String nome;
 
     @Column(unique = true, length = 14)
     private String cpf;
-
-    @Column(nullable = false, length = 100)
-    private String formacao;
 
     @Column(length = 15)
     private String telefone;
@@ -33,24 +27,26 @@ public class Professor extends Usuario {
     @Column(length = 50)
     private String cargo;
 
+    @Column(length = 20)
+    private String matricula;
 
-    public Professor() {
+    // Construtores
+    public Secretaria() {
         super();
-        this.setPerfil(Perfil.PROFESSOR);
+        this.setPerfil(Perfil.SECRETARIA);
     }
 
-    public Professor(String email, String senha, String nome) {
-        super(email, senha, Perfil.PROFESSOR);
+    public Secretaria(String email, String senha, String nome) {
+        super(email, senha, Perfil.SECRETARIA);
         this.nome = nome;
         this.dataContratacao = LocalDate.now();
     }
 
-    public Professor(String email, String senha, String nome, String cpf, String telefone) {
-        super(email, senha, Perfil.PROFESSOR);
+    public Secretaria(String email, String senha, String nome, String cpf, String telefone) {
+        super(email, senha, Perfil.SECRETARIA);
         this.nome = nome;
         this.cpf = cpf;
         this.telefone = telefone;
         this.dataContratacao = LocalDate.now();
     }
-
 }

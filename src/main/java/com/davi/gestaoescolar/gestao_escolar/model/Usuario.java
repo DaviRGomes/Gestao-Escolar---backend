@@ -4,6 +4,8 @@ import com.davi.gestaoescolar.gestao_escolar.model.enums.Perfil;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -28,7 +30,13 @@ public class Usuario {
     private Perfil perfil;
 
     private LocalDateTime ultimoAcesso;
+    
 
+    @Column(name = "data_nascimento")
+    private LocalDate dataNascimento;
+
+    @Column(length = 200)
+    private String endereco;
 
 
     private Boolean ativo = true;

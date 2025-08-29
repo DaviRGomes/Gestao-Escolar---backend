@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão Escolar - Frontend</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Sistema de Gestão Escolar</h1>
+            <p>Interface para testar API REST - localhost:8082</p>
+        </header>
+
+        <main>
+            <!-- Seção de Usuários -->
+            <section class="api-section">
+                <h2>Gerenciar Usuários</h2>
+                
+                <div class="form-container">
+                    <h3>Criar Usuário</h3>
+                    <form id="createUserForm">
+                        <input type="email" id="userEmail" placeholder="Email" required>
+                        <input type="password" id="userPassword" placeholder="Senha" required>
+                        <select id="userPerfil" required>
+                            <option value="">Selecione o Perfil</option>
+                            <option value="ADMIN">ADMIN</option>
+                            <option value="PROFESSOR">PROFESSOR</option>
+                            <option value="RESPONSAVEL">RESPONSAVEL</option>
+                        </select>
+                        <button type="submit">Criar Usuário</button>
+                    </form>
+                </div>
+
+                <div class="form-container">
+                    <h3>Buscar Usuário</h3>
+                    <form id="searchUserForm">
+                        <input type="number" id="searchUserId" placeholder="ID do Usuário">
+                        <input type="email" id="searchUserEmail" placeholder="Email do Usuário">
+                        <button type="button" onclick="searchUser()">Buscar por ID</button>
+                        <button type="button" onclick="searchUserByEmail()">Buscar por Email</button>
+                        <button type="button" onclick="listAllUsers()">Listar Todos</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Seção de Professores -->
+            <section class="api-section">
+                <h2>Gerenciar Professores</h2>
+                
+                <div class="form-container">
+                    <h3>Criar Professor</h3>
+                    <form id="createProfessorForm">
+                        <input type="email" id="profEmail" placeholder="Email" required>
+                        <input type="password" id="profPassword" placeholder="Senha" required>
+                        <input type="text" id="profNome" placeholder="Nome" required>
+                        <input type="text" id="profCpf" placeholder="CPF" required>
+                        <input type="text" id="profFormacao" placeholder="Formação">
+                        <input type="text" id="profTelefone" placeholder="Telefone">
+                        <button type="submit">Criar Professor</button>
+                    </form>
+                </div>
+
+                <div class="form-container">
+                    <h3>Buscar Professor</h3>
+                    <form id="searchProfessorForm">
+                        <input type="number" id="searchProfId" placeholder="ID do Professor">
+                        <input type="text" id="searchProfCpf" placeholder="CPF do Professor">
+                        <input type="email" id="searchProfEmail" placeholder="Email do Professor">
+                        <button type="button" onclick="searchProfessor()">Buscar por ID</button>
+                        <button type="button" onclick="searchProfessorByCpf()">Buscar por CPF</button>
+                        <button type="button" onclick="searchProfessorByEmail()">Buscar por Email</button>
+                        <button type="button" onclick="listAllProfessors()">Listar Todos</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Área de Resultados -->
+            <section class="results-section">
+                <h2>Resultados</h2>
+                <div id="results" class="results-container">
+                    <p>Os resultados das operações aparecerão aqui...</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

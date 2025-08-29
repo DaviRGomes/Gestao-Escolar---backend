@@ -1,8 +1,6 @@
 package com.davi.gestaoescolar.gestao_escolar.repository;
 
 import com.davi.gestaoescolar.gestao_escolar.model.AlunoResponsavel;
-import com.davi.gestaoescolar.gestao_escolar.model.Aluno;
-import com.davi.gestaoescolar.gestao_escolar.model.Responsavel;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

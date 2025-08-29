@@ -24,7 +24,7 @@ public class Aluno {
     private LocalDate dataNascimento;
 
     @Column(unique = true, nullable = false)
-    private String matricula;
+    private String cpf;
 
     private String observacoes;
 
@@ -41,17 +41,16 @@ public class Aluno {
     private List<AlunoResponsavel> responsaveis = new ArrayList<>();
 
 
-    @ManyToOne
-    @JoinColumn(name = "comportamento_id", nullable = false)
-    private Comportamento comportamento;
+    @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comportamento> comportamentos = new ArrayList<>();
 
     // Construtores
     public Aluno() {}
 
-    public Aluno(String nome, LocalDate dataNascimento, String matricula) {
+    public Aluno(String nome, LocalDate dataNascimento, String cpf) {
         this.nome = nome;
         this.dataNascimento = dataNascimento;
-        this.matricula = matricula;
+        this.cpf = cpf;
     }
 
 

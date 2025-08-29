@@ -10,7 +10,7 @@ import java.util.Optional;
 @Repository
 public interface AlunoRepository extends JpaRepository<Aluno, Long> {
     
-    Optional<Aluno> findByMatricula(String matricula);
+    Optional<Aluno> findByCpf(String cpf);
     
     List<Aluno> findByNomeContainingIgnoreCase(String nome);
     
