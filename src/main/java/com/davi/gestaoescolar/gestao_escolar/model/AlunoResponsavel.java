@@ -1,4 +1,7 @@
 package com.davi.gestaoescolar.gestao_escolar.model;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,10 +18,12 @@ public class AlunoResponsavel {
 
     @ManyToOne
     @JoinColumn(name = "aluno_id", nullable = false)
+    @JsonIgnoreProperties({"responsaveis", "matriculas", "comportamentos", "dataNascimento", "cpf", "observacoes"})
     private Aluno aluno;
 
     @ManyToOne
     @JoinColumn(name = "responsavel_id", nullable = false)
+    @JsonBackReference
     private Responsavel responsavel;
 
     @Column(nullable = false)
@@ -38,18 +43,5 @@ public class AlunoResponsavel {
         this.principal = principal;
     }
 
-    // Equals e hashCode para comparar instâncias (importante para remoção de coleções)
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof AlunoResponsavel)) return false;
-        AlunoResponsavel that = (AlunoResponsavel) o;
-        return aluno != null && aluno.equals(that.aluno) &&
-                responsavel != null && responsavel.equals(that.responsavel);
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
-    }
+  
 }

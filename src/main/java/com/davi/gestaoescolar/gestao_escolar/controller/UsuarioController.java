@@ -1,8 +1,7 @@
 package com.davi.gestaoescolar.gestao_escolar.controller;
 
-import com.davi.gestaoescolar.gestao_escolar.dto.UsuarioDTO;
+
 import com.davi.gestaoescolar.gestao_escolar.model.Usuario;
-import com.davi.gestaoescolar.gestao_escolar.model.enums.Perfil;
 import com.davi.gestaoescolar.gestao_escolar.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

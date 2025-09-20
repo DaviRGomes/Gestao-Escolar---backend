@@ -13,10 +13,8 @@ public interface ResponsavelRepository extends JpaRepository<Responsavel, Long> 
     Optional<Responsavel> findByCpf(String cpf);
     
     List<Responsavel> findByNomeContainingIgnoreCase(String nome);
-    
-    Optional<Responsavel> findByEmail(String email);
+
     
     List<Responsavel> findByTelefoneContaining(String telefone);
-    
-    List<Responsavel> findByParentescoContainingIgnoreCase(String parentesco);
+  
 }

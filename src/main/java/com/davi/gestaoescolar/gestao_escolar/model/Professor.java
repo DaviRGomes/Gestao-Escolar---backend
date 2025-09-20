@@ -1,11 +1,14 @@
 package com.davi.gestaoescolar.gestao_escolar.model;
 
 import com.davi.gestaoescolar.gestao_escolar.model.enums.Perfil;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Entity
@@ -33,6 +36,8 @@ public class Professor extends Usuario {
     @Column(length = 50)
     private String cargo;
 
+    @OneToMany(mappedBy = "professor", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Disciplina> disciplinas = new ArrayList<>();
 
     public Professor() {
         super();

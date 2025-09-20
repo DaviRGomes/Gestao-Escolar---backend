@@ -1,0 +1,15 @@
+{
+  "email": "jaqueline@gmail.com",
+  "senha": "1212",
+  "perfil": "PROFESSOR",
+  "ultimoAcesso": "2025-09-13T18:23:00.240Z",
+  "dataNascimento": "2025-07-26",
+  "endereco": "Rua Benedito Cardoso Faria",
+  "ativo": true,
+  "nome": "Jaqueline Lemes Rosa Gomes",
+  "cpf": "12345423123",
+  "formacao": "Pedagogia",
+  "telefone": "3599894123",
+  "dataContratacao": "2025-09-13",
+  "cargo": "Professor"
+}

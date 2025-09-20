@@ -1,0 +1,95 @@
+{
+  "alunos": [
+    {
+      "id": 1,
+      "nome": "Davi Silva Santos",
+      "email": "davi.santos@escola.com",
+      "cpf": "123.456.789-01",
+      "dataNascimento": "2010-05-15",
+      "telefone": "(11) 99999-1234",
+      "endereco": {
+        "rua": "Rua das Flores, 123",
+        "bairro": "Centro",
+        "cidade": "São Paulo",
+        "cep": "01234-567",
+        "estado": "SP"
+      },
+      "matricula": "2024001",
+      "turma": "9º Ano A",
+      "anoLetivo": 2024,
+      "perfil": "ALUNO",
+      "ativo": true,
+      "responsavel": {
+        "nome": "João Silva Santos",
+        "email": "joao.santos@email.com",
+        "telefone": "(11) 98888-5678",
+        "parentesco": "Pai"
+      },
+      "notas": [
+        {
+          "disciplina": "Matemática",
+          "nota1": 8.5,
+          "nota2": 7.0,
+          "nota3": 9.0,
+          "media": 8.17
+        },
+        {
+          "disciplina": "Português",
+          "nota1": 7.5,
+          "nota2": 8.0,
+          "nota3": 8.5,
+          "media": 8.0
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "nome": "Maria Oliveira Costa",
+      "email": "maria.costa@escola.com",
+      "cpf": "987.654.321-02",
+      "dataNascimento": "2009-12-03",
+      "telefone": "(11) 99999-5678",
+      "endereco": {
+        "rua": "Avenida Paulista, 456",
+        "bairro": "Bela Vista",
+        "cidade": "São Paulo",
+        "cep": "01310-100",
+        "estado": "SP"
+      },
+      "matricula": "2024002",
+      "turma": "9º Ano B",
+      "anoLetivo": 2024,
+      "perfil": "ALUNO",
+      "ativo": true,
+      "responsavel": {
+        "nome": "Ana Oliveira Costa",
+        "email": "ana.costa@email.com",
+        "telefone": "(11) 97777-9012",
+        "parentesco": "Mãe"
+      },
+      "notas": [
+        {
+          "disciplina": "Matemática",
+          "nota1": 9.0,
+          "nota2": 8.5,
+          "nota3": 9.5,
+          "media": 9.0
+        },
+        {
+          "disciplina": "Português",
+          "nota1": 8.0,
+          "nota2": 9.0,
+          "nota3": 8.5,
+          "media": 8.5
+        },
+        {
+          "disciplina": "História",
+          "nota1": 7.5,
+          "nota2": 8.0,
+          "nota3": 8.5,
+          "media": 8.0
+        }
+      ]
+    }
+  ]
+}

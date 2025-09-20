@@ -1,6 +1,5 @@
 package com.davi.gestaoescolar.gestao_escolar.controller;
 
-import com.davi.gestaoescolar.gestao_escolar.dto.ProfessorDTO;
 import com.davi.gestaoescolar.gestao_escolar.model.Professor;
 import com.davi.gestaoescolar.gestao_escolar.service.ProfessorService;
 import org.springframework.beans.factory.annotation.Autowired;

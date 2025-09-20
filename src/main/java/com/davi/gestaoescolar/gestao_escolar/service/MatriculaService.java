@@ -65,8 +65,8 @@ public class MatriculaService {
         matricula.setSituacao(matriculaAtualizada.getSituacao());
         
         // Só permite alterar aluno e turma se a situação permitir
-        if (matricula.getSituacao() != SituacaoMatricula.CANCELADA && 
-            matricula.getSituacao() != SituacaoMatricula.CONCLUIDA) {
+        if (matricula.getSituacao() != SituacaoMatricula.DESATIVADO && 
+            matricula.getSituacao() != SituacaoMatricula.DESATIVADO) {
             
             if (!matricula.getAluno().getId().equals(matriculaAtualizada.getAluno().getId()) ||
                 !matricula.getTurma().getId().equals(matriculaAtualizada.getTurma().getId())) {
@@ -169,27 +169,27 @@ public class MatriculaService {
     }
 
     /**
-     * Cancela uma matrícula
+     * Desativa uma matrícula
      */
-    public void cancelar(Long id) {
+    public void desativar(Long id) {
         Optional<Matricula> matricula = matriculaRepository.findById(id);
         if (matricula.isEmpty()) {
             throw new RuntimeException("Matrícula não encontrada com ID: " + id);
         }
         
         Matricula matriculaEntity = matricula.get();
-        if (matriculaEntity.getSituacao() == SituacaoMatricula.CANCELADA) {
-            throw new RuntimeException("Matrícula já está cancelada");
+        if (matriculaEntity.getSituacao() == SituacaoMatricula.DESATIVADO) {
+            throw new RuntimeException("Matrícula já está desativada");
         }
         
-        matriculaEntity.setSituacao(SituacaoMatricula.CANCELADA);
+        matriculaEntity.setSituacao(SituacaoMatricula.DESATIVADO);
         matriculaRepository.save(matriculaEntity);
     }
 
     /**
-     * Suspende uma matrícula
+     * Coloca uma matrícula em processo
      */
-    public void suspender(Long id) {
+    public void colocarEmProcesso(Long id) {
         Optional<Matricula> matricula = matriculaRepository.findById(id);
         if (matricula.isEmpty()) {
             throw new RuntimeException("Matrícula não encontrada com ID: " + id);
@@ -197,25 +197,25 @@ public class MatriculaService {
         
         Matricula matriculaEntity = matricula.get();
         if (matriculaEntity.getSituacao() != SituacaoMatricula.ATIVA) {
-            throw new RuntimeException("Só é possível suspender matrículas ativas");
+            throw new RuntimeException("Só é possível colocar em processo matrículas ativas");
         }
         
-        matriculaEntity.setSituacao(SituacaoMatricula.SUSPENSA);
+        matriculaEntity.setSituacao(SituacaoMatricula.EM_PROCESSO);
         matriculaRepository.save(matriculaEntity);
     }
 
     /**
-     * Reativa uma matrícula suspensa
+     * Ativa uma matrícula
      */
-    public void reativar(Long id) {
+    public void ativar(Long id) {
         Optional<Matricula> matricula = matriculaRepository.findById(id);
         if (matricula.isEmpty()) {
             throw new RuntimeException("Matrícula não encontrada com ID: " + id);
         }
         
         Matricula matriculaEntity = matricula.get();
-        if (matriculaEntity.getSituacao() != SituacaoMatricula.SUSPENSA) {
-            throw new RuntimeException("Só é possível reativar matrículas suspensas");
+        if (matriculaEntity.getSituacao() == SituacaoMatricula.ATIVA) {
+            throw new RuntimeException("Matrícula já está ativa");
         }
         
         matriculaEntity.setSituacao(SituacaoMatricula.ATIVA);
@@ -223,9 +223,9 @@ public class MatriculaService {
     }
 
     /**
-     * Conclui uma matrícula
+     * Finaliza uma matrícula (marca como desativada)
      */
-    public void concluir(Long id) {
+    public void finalizar(Long id) {
         Optional<Matricula> matricula = matriculaRepository.findById(id);
         if (matricula.isEmpty()) {
             throw new RuntimeException("Matrícula não encontrada com ID: " + id);
@@ -233,11 +233,50 @@ public class MatriculaService {
         
         Matricula matriculaEntity = matricula.get();
         if (matriculaEntity.getSituacao() != SituacaoMatricula.ATIVA) {
-            throw new RuntimeException("Só é possível concluir matrículas ativas");
+            throw new RuntimeException("Só é possível finalizar matrículas ativas");
         }
         
-        matriculaEntity.setSituacao(SituacaoMatricula.CONCLUIDA);
+        matriculaEntity.setSituacao(SituacaoMatricula.DESATIVADO);
         matriculaRepository.save(matriculaEntity);
+    }
+
+    /**
+     * Transfere um aluno para outra turma
+     */
+    public Matricula transferirTurma(Long matriculaId, Long novaTurmaId) {
+        // Buscar a matrícula existente
+        Optional<Matricula> matriculaOpt = matriculaRepository.findById(matriculaId);
+        if (matriculaOpt.isEmpty()) {
+            throw new RuntimeException("Matrícula não encontrada com ID: " + matriculaId);
+        }
+        
+        Matricula matricula = matriculaOpt.get();
+        
+        // Verificar se a matrícula está ativa
+        if (matricula.getSituacao() != SituacaoMatricula.ATIVA) {
+            throw new RuntimeException("Só é possível transferir matrículas ativas");
+        }
+        
+        // Buscar a nova turma
+        Optional<Turma> novaTurmaOpt = turmaRepository.findById(novaTurmaId);
+        if (novaTurmaOpt.isEmpty()) {
+            throw new RuntimeException("Turma não encontrada com ID: " + novaTurmaId);
+        }
+        
+        Turma novaTurma = novaTurmaOpt.get();
+        
+        // Verificar se a turma está ativa
+        if (!novaTurma.getAtivo()) {
+            throw new RuntimeException("Não é possível transferir para uma turma inativa");
+        }
+        
+        // Verificar se já existe matrícula do aluno na nova turma
+        verificarMatriculaDuplicada(matricula.getAluno().getId(), novaTurmaId, matriculaId);
+        
+        // Atualizar a turma da matrícula
+        matricula.setTurma(novaTurma);
+        
+        return matriculaRepository.save(matricula);
     }
 
     /**

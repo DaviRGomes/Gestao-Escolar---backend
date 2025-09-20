@@ -1,6 +1,9 @@
 package com.davi.gestaoescolar.gestao_escolar.model;
 
 import com.davi.gestaoescolar.gestao_escolar.model.enums.Periodo;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -37,6 +40,7 @@ public class Turma {
 
     // Relacionamento com Matriculas
     @OneToMany(mappedBy = "turma", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("turma-matriculas")
     private List<Matricula> matriculas = new ArrayList<>();
 
     // Relacionamento com Disciplinas (Muitos-para-Muitos)
@@ -46,14 +50,17 @@ public class Turma {
             joinColumns = @JoinColumn(name = "turma_id"),
             inverseJoinColumns = @JoinColumn(name = "disciplina_id")
     )
+    @JsonIgnoreProperties({"turmas", "planejamentos", "registrosAula", "professor"})
     private List<Disciplina> disciplinas = new ArrayList<>();
 
-    // Relacionamento com RegistroAula
+    // Relacionamento com RegistrosAula
     @OneToMany(mappedBy = "turma", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"turma", "disciplina", "professor", "conteudoPlanejado"})
     private List<RegistroAula> registrosAula = new ArrayList<>();
 
-    // Relacionamento 1:N - Uma turma tem muitos planejamentos
+    // Relacionamento com Planejamentos
     @OneToMany(mappedBy = "turma", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"turma", "disciplina", "conteudos"})
     private List<Planejamento> planejamentos = new ArrayList<>();
 
     // Construtores

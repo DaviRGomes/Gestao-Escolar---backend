@@ -3,7 +3,7 @@ package com.davi.gestaoescolar.gestao_escolar.service;
 import com.davi.gestaoescolar.gestao_escolar.model.Disciplina;
 import com.davi.gestaoescolar.gestao_escolar.model.Professor;
 import com.davi.gestaoescolar.gestao_escolar.repository.DisciplinaRepository;
-import com.davi.gestaoescolar.gestao_escolar.repository.ProfessorRepository;
+import com.davi.gestaoescolar.gestao_escolar.service.ProfessorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +19,7 @@ public class DisciplinaService {
     private DisciplinaRepository disciplinaRepository;
     
     @Autowired
-    private ProfessorRepository professorRepository;
+    private ProfessorService professorService;
 
     /**
      * Salva uma nova disciplina
@@ -167,7 +167,7 @@ public class DisciplinaService {
             throw new RuntimeException("Disciplina não encontrada com ID: " + disciplinaId);
         }
         
-        Optional<Professor> professorOpt = professorRepository.findById(professorId);
+        Optional<Professor> professorOpt = professorService.buscarPorId(professorId);
         if (professorOpt.isEmpty()) {
             throw new RuntimeException("Professor não encontrado com ID: " + professorId);
         }
@@ -226,7 +226,7 @@ public class DisciplinaService {
             throw new IllegalArgumentException("Professor é obrigatório");
         }
         
-        Optional<Professor> professorExistente = professorRepository.findById(professor.getId());
+        Optional<Professor> professorExistente = professorService.buscarPorId(professor.getId());
         if (professorExistente.isEmpty()) {
             throw new RuntimeException("Professor não encontrado com ID: " + professor.getId());
         }

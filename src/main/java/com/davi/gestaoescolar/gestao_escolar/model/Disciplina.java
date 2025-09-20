@@ -1,5 +1,6 @@
 package com.davi.gestaoescolar.gestao_escolar.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -29,19 +30,23 @@ public class Disciplina {
 
     // Relacionamento com Turmas (Muitos-para-Muitos)
     @ManyToMany(mappedBy = "disciplinas")
+    @JsonIgnoreProperties({"disciplinas", "planejamentos", "matriculas", "registrosAula"})
     private List<Turma> turmas = new ArrayList<>();
 
     // Relacionamento com Professores (Muitos-para-Muitos)
     @ManyToOne
     @JoinColumn(name = "professor_id", nullable = false)
+    @JsonIgnoreProperties({"disciplinas", "email", "senha", "perfil", "ultimoAcesso", "dataNascimento", "endereco", "ativo", "cpf", "formacao", "telefone", "dataContratacao", "cargo"})
     private Professor professor;
 
     // Relacionamento com Planejamentos
     @OneToMany(mappedBy = "disciplina", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"disciplina", "turma", "conteudos"})
     private List<Planejamento> planejamentos = new ArrayList<>();
 
     // Relacionamento com RegistrosAula
     @OneToMany(mappedBy = "disciplina", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"disciplina", "turma", "professor", "conteudoPlanejado"})
     private List<RegistroAula> registrosAula = new ArrayList<>();
 
     // Construtores

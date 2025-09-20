@@ -2,6 +2,9 @@ package com.davi.gestaoescolar.gestao_escolar.model;
 
 
 import com.davi.gestaoescolar.gestao_escolar.model.enums.SituacaoMatricula;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,11 +30,13 @@ public class Matricula {
     // Relacionamento com Aluno
     @ManyToOne
     @JoinColumn(name = "aluno_id", nullable = false)
+    @JsonIgnoreProperties({"matriculas", "responsaveis", "comportamentos", "dataNascimento", "cpf", "observacoes", "ativo"})
     private Aluno aluno;
 
     // Relacionamento com Turma
     @ManyToOne
     @JoinColumn(name = "turma_id", nullable = false)
+    @JsonBackReference("turma-matriculas")
     private Turma turma;
 
     // Construtores

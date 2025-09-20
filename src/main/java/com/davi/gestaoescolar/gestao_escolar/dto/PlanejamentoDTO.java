@@ -1,14 +1,28 @@
 package com.davi.gestaoescolar.gestao_escolar.dto;
 
-import java.time.LocalDateTime;
+import lombok.Getter;
+import lombok.Setter;
 
-public record PlanejamentoDTO(
-    Long id,
-    String descricao,
-    String semestre,
-    Integer ano,
-    LocalDateTime dataCriacao,
-    LocalDateTime dataAtualizacao,
-    Long disciplinaId,
-    Long turmaId
-) {}
+@Getter
+@Setter
+public class PlanejamentoDTO {
+    private String descricao;
+    private String semestre;
+    private Integer ano;
+    private DisciplinaDTO disciplina;
+    private TurmaDTO turma;
+
+    @Getter
+    @Setter
+    public static class DisciplinaDTO {
+        private Long id;
+        private String nome;
+    }
+
+    @Getter
+    @Setter
+    public static class TurmaDTO {
+        private Long id;
+        private String nome;
+    }
+}

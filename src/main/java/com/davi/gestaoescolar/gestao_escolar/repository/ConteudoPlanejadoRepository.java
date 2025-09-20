@@ -20,9 +20,5 @@ public interface ConteudoPlanejadoRepository extends JpaRepository<ConteudoPlane
     
     List<ConteudoPlanejado> findByConcluidoFalse();
     
-    List<ConteudoPlanejado> findByPlanejamentoIdAndConcluidoTrue(Long planejamentoId);
-    
-    List<ConteudoPlanejado> findByPlanejamentoIdAndConcluidoFalse(Long planejamentoId);
-    
-    List<ConteudoPlanejado> findByPlanejamentoIdOrderByOrdemApresentacaoAsc(Long planejamentoId);
+
 }

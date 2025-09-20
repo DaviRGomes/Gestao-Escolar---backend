@@ -1,6 +1,6 @@
 package com.davi.gestaoescolar.gestao_escolar.model;
 
-import com.davi.gestaoescolar.gestao_escolar.model.enums.Perfil;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,12 +8,19 @@ import lombok.Setter;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 @Entity
 @Table(name = "responsavel")
-@PrimaryKeyJoinColumn(name = "usuario_id")
 @Getter
 @Setter
-public class Responsavel extends Usuario {
+public class Responsavel {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(nullable = false)
     private String nome;
@@ -26,15 +33,20 @@ public class Responsavel extends Usuario {
     private String parentesco;
 
     // Relacionamento com Responsaveis (via tabela de junção)
-    @OneToMany(mappedBy = "responsavel", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "responsavel", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JsonIgnoreProperties({"responsavel", "aluno.responsaveis", "aluno.disciplinas", 
+    "aluno.dataNascimento", "aluno.cpf", "aluno.observacoes"})
     private List<AlunoResponsavel> responsaveis = new ArrayList<>();
 
     // Construtores
     public Responsavel() {}
 
-    public Responsavel(String email, String senha, String nome, String cpf) {
-        super(email, senha, Perfil.RESPONSAVEL);
+    public Responsavel(String nome, String telefone, String cpf) {
         this.nome = nome;
+        this.telefone = telefone;
         this.cpf = cpf;
+
     }
+    
+  
 }

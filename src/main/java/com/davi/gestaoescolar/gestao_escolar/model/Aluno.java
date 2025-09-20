@@ -3,6 +3,10 @@ package com.davi.gestaoescolar.gestao_escolar.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,10 +38,12 @@ public class Aluno {
 
 
     @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("aluno-matriculas")
     private List<Matricula> matriculas = new ArrayList<>();
 
     // Relacionamento com Responsaveis (via tabela de junção)
-    @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true,  fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"responsaveis.id", "responsaveis.principal"})
     private List<AlunoResponsavel> responsaveis = new ArrayList<>();
 
 
