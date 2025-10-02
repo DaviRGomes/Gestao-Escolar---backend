@@ -1,5 +1,8 @@
 package com.davi.gestaoescolar.gestao_escolar.service;
 
+import com.davi.gestaoescolar.gestao_escolar.dto.Planejamento.PlanejamentoDtoIn;
+import com.davi.gestaoescolar.gestao_escolar.dto.Planejamento.PlanejamentoDtoOut;
+import com.davi.gestaoescolar.gestao_escolar.exception.PlanejamentoException;
 import com.davi.gestaoescolar.gestao_escolar.model.Disciplina;
 import com.davi.gestaoescolar.gestao_escolar.model.Planejamento;
 import com.davi.gestaoescolar.gestao_escolar.model.Turma;
@@ -11,8 +14,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -28,127 +33,192 @@ public class PlanejamentoService {
     private TurmaRepository turmaRepository;
 
     /**
+     * Metodo auxiliares
+     */
+    private List<PlanejamentoDtoOut> toDtos (List<Planejamento> planejamentos){
+        return planejamentos.stream()
+                .map(this::toDTO).collect(Collectors.toList());
+    }
+
+    private Optional<PlanejamentoDtoOut> toDTO(Optional<Planejamento> planejamento) {
+        return planejamento.map(this::toDTO);
+    }
+
+    private PlanejamentoDtoOut toDTO(Planejamento planejamento){
+        return new PlanejamentoDtoOut(planejamento.getId(), planejamento.getDescricao(),
+                planejamento.getSemestre(), planejamento.getAno(),
+                new PlanejamentoDtoOut.DisciplinaDTO(planejamento.getDisciplina().getId(), planejamento.getDisciplina().getNome()),
+                new PlanejamentoDtoOut.TurmaDTO(planejamento.getTurma().getId(), planejamento.getTurma().getNome()),
+                planejamento.getDataCriacao(), planejamento.getDataAtualizacao());
+    }
+
+
+
+    /**
      * Salva um novo planejamento
      */
-    public Planejamento salvar(Planejamento planejamento) {
-        validarDadosPlanejamento(planejamento);
-        validarDisciplinaETurma(planejamento.getDisciplina(), planejamento.getTurma());
-        verificarPlanejamentoDuplicado(planejamento);
+    public PlanejamentoDtoIn salvar(PlanejamentoDtoIn planejamentoDTO) {
+        validarDadosPlanejamento(planejamentoDTO);
+        validarDisciplinaETurma(planejamentoDTO.getDisciplinaId(), planejamentoDTO.getTurmaId());
+        verificarPlanejamentoDuplicado(planejamentoDTO);
         
         // Define a data de criação se não foi informada
-        if (planejamento.getDataCriacao() == null) {
-            planejamento.setDataCriacao(LocalDateTime.now());
+        if (planejamentoDTO.getDataCriacao() == null) {
+            planejamentoDTO.setDataCriacao(LocalDateTime.now());
         }
-        
-        return planejamentoRepository.save(planejamento);
+
+
+
+        // 🔹 Buscar entidades no banco
+        Disciplina disciplina = disciplinaRepository.findById(
+                        planejamentoDTO.getDisciplinaId())
+                .orElseThrow(() -> new PlanejamentoException("Disciplina não encontrada"));
+
+        Turma turma = turmaRepository.findById(
+                        planejamentoDTO.getTurmaId())
+                .orElseThrow(() -> new PlanejamentoException("Turma não encontrada"));
+
+        // 🔹 Criar entidade Planejamento
+        Planejamento planejamento = new Planejamento(
+                planejamentoDTO.getDescricao(),
+                planejamentoDTO.getSemestre(),
+                planejamentoDTO.getAno(),
+                planejamentoDTO.getDataCriacao(),
+                null, // dataAtualizacao
+                disciplina,
+                turma,
+                new ArrayList<>() // conteudos vazios no início
+        );
+
+        planejamentoRepository.save(planejamento);
+
+        return planejamentoDTO;
     }
 
     /**
      * Atualiza um planejamento existente
      */
-    public Planejamento atualizar(Long id, Planejamento planejamentoAtualizado) {
+    public Planejamento atualizar(Long id, PlanejamentoDtoIn planejamentoAtualizado) {
+        // Buscar planejamento existente
         Optional<Planejamento> planejamentoExistente = planejamentoRepository.findById(id);
         if (planejamentoExistente.isEmpty()) {
-            throw new RuntimeException("Planejamento não encontrado com ID: " + id);
+            throw new PlanejamentoException("Planejamento não encontrado com ID: " + id);
         }
 
+        // Validar dados do DTO
         validarDadosPlanejamento(planejamentoAtualizado);
-        
+
         Planejamento planejamento = planejamentoExistente.get();
-        
-        // Verifica se houve mudança nos campos únicos
-        boolean mudouCamposUnicos = !planejamento.getDisciplina().getId().equals(planejamentoAtualizado.getDisciplina().getId()) ||
-                                   !planejamento.getTurma().getId().equals(planejamentoAtualizado.getTurma().getId()) ||
-                                   !planejamento.getSemestre().equals(planejamentoAtualizado.getSemestre()) ||
-                                   !planejamento.getAno().equals(planejamentoAtualizado.getAno());
-        
+
+        // Buscar entidades Disciplina e Turma no banco
+        Disciplina disciplina = disciplinaRepository.findById(planejamentoAtualizado.getDisciplinaId())
+                .orElseThrow(() -> new PlanejamentoException("Disciplina não encontrada"));
+        Turma turma = turmaRepository.findById(planejamentoAtualizado.getTurmaId())
+                .orElseThrow(() -> new PlanejamentoException("Turma não encontrada"));
+
+        // Verifica se houve mudança nos campos únicos (disciplina, turma, semestre, ano)
+        boolean mudouCamposUnicos = !planejamento.getDisciplina().getId().equals(disciplina.getId()) ||
+                !planejamento.getTurma().getId().equals(turma.getId()) ||
+                !planejamento.getSemestre().equals(planejamentoAtualizado.getSemestre()) ||
+                !planejamento.getAno().equals(planejamentoAtualizado.getAno());
+
         if (mudouCamposUnicos) {
-            validarDisciplinaETurma(planejamentoAtualizado.getDisciplina(), planejamentoAtualizado.getTurma());
+            // Valida se disciplina/turma já estão associadas a outro planejamento
+            validarDisciplinaETurma(disciplina.getId(), turma.getId());
             verificarPlanejamentoDuplicado(planejamentoAtualizado, id);
-            
-            planejamento.setDisciplina(planejamentoAtualizado.getDisciplina());
-            planejamento.setTurma(planejamentoAtualizado.getTurma());
+
+            // Atualiza campos únicos
+            planejamento.setDisciplina(disciplina);
+            planejamento.setTurma(turma);
             planejamento.setSemestre(planejamentoAtualizado.getSemestre());
             planejamento.setAno(planejamentoAtualizado.getAno());
         }
-        
+
+        // Atualiza outros campos
         planejamento.setDescricao(planejamentoAtualizado.getDescricao());
         planejamento.setDataAtualizacao(LocalDateTime.now());
-        
+
+        // Salvar atualização no banco
         return planejamentoRepository.save(planejamento);
     }
+
 
     /**
      * Busca planejamento por ID
      */
     @Transactional(readOnly = true)
-    public Optional<Planejamento> buscarPorId(Long id) {
-        return planejamentoRepository.findById(id);
+    public Optional<PlanejamentoDtoOut> buscarPorId(Long id) {
+
+
+        return toDTO(planejamentoRepository.findById(id));
     }
 
     /**
      * Busca planejamentos por disciplina
      */
     @Transactional(readOnly = true)
-    public List<Planejamento> buscarPorDisciplina(Long disciplinaId) {
+    public List<PlanejamentoDtoOut> buscarPorDisciplina(Long disciplinaId) {
         if (disciplinaId == null) {
             throw new IllegalArgumentException("ID da disciplina não pode ser nulo");
         }
-        return planejamentoRepository.findByDisciplinaId(disciplinaId);
+        List<Planejamento> planejamento = planejamentoRepository.findByDisciplinaId(disciplinaId);
+
+        return toDtos(planejamento);
+
     }
 
     /**
      * Busca planejamentos por turma
      */
     @Transactional(readOnly = true)
-    public List<Planejamento> buscarPorTurma(Long turmaId) {
+    public List<PlanejamentoDtoOut> buscarPorTurma(Long turmaId) {
         if (turmaId == null) {
             throw new IllegalArgumentException("ID da turma não pode ser nulo");
         }
-        return planejamentoRepository.findByTurmaId(turmaId);
+        return toDtos(planejamentoRepository.findByTurmaId(turmaId));
     }
 
     /**
      * Busca planejamentos por ano
      */
     @Transactional(readOnly = true)
-    public List<Planejamento> buscarPorAno(Integer ano) {
+    public List<PlanejamentoDtoOut> buscarPorAno(Integer ano) {
         if (ano == null) {
             throw new IllegalArgumentException("Ano não pode ser nulo");
         }
-        return planejamentoRepository.findByAno(ano);
+        return toDtos(planejamentoRepository.findByAno(ano));
     }
 
     /**
      * Busca planejamentos por semestre
      */
     @Transactional(readOnly = true)
-    public List<Planejamento> buscarPorSemestre(String semestre) {
+    public List<PlanejamentoDtoOut> buscarPorSemestre(String semestre) {
         if (semestre == null || semestre.trim().isEmpty()) {
             throw new IllegalArgumentException("Semestre não pode ser vazio");
         }
-        return planejamentoRepository.findBySemestre(semestre.trim());
+        return toDtos(planejamentoRepository.findBySemestre(semestre.trim()));
     }
 
     /**
      * Busca planejamentos por ano e semestre
      */
     @Transactional(readOnly = true)
-    public List<Planejamento> buscarPorAnoESemestre(Integer ano, String semestre) {
+    public List<PlanejamentoDtoOut> buscarPorAnoESemestre(Integer ano, String semestre) {
         if (ano == null) {
             throw new IllegalArgumentException("Ano não pode ser nulo");
         }
         if (semestre == null || semestre.trim().isEmpty()) {
             throw new IllegalArgumentException("Semestre não pode ser vazio");
         }
-        return planejamentoRepository.findByAnoAndSemestre(ano, semestre.trim());
+        return toDtos(planejamentoRepository.findByAnoAndSemestre(ano, semestre.trim()));
     }
 
     /**
      * Busca planejamento específico por disciplina, turma, semestre e ano
      */
     @Transactional(readOnly = true)
-    public Optional<Planejamento> buscarEspecifico(Long disciplinaId, Long turmaId, String semestre, Integer ano) {
+    public Optional<PlanejamentoDtoOut> buscarEspecifico(Long disciplinaId, Long turmaId, String semestre, Integer ano) {
         if (disciplinaId == null) {
             throw new IllegalArgumentException("ID da disciplina não pode ser nulo");
         }
@@ -161,17 +231,23 @@ public class PlanejamentoService {
         if (ano == null) {
             throw new IllegalArgumentException("Ano não pode ser nulo");
         }
+
+        Optional<Planejamento> planejamento = planejamentoRepository.findByDisciplinaIdAndTurmaIdAndSemestreAndAno(
+                disciplinaId, turmaId, semestre.trim(), ano);
+        if(planejamento.isPresent()){
+            return toDTO(planejamento);
+        }
         
-        return planejamentoRepository.findByDisciplinaIdAndTurmaIdAndSemestreAndAno(
-            disciplinaId, turmaId, semestre.trim(), ano);
+        return null;
     }
 
     /**
      * Lista todos os planejamentos
      */
     @Transactional(readOnly = true)
-    public List<Planejamento> listarTodos() {
-        return planejamentoRepository.findAll();
+    public List<PlanejamentoDtoOut> listarTodos() {
+
+        return toDtos(planejamentoRepository.findAll());
     }
 
     /**
@@ -179,43 +255,14 @@ public class PlanejamentoService {
      */
     public void deletar(Long id) {
         if (!planejamentoRepository.existsById(id)) {
-            throw new RuntimeException("Planejamento não encontrado com ID: " + id);
+            throw new PlanejamentoException("Planejamento não encontrado com ID: " + id);
         }
-        planejamentoRepository.deleteById(id);
-    }
-
-    /**
-     * Cria um planejamento básico para uma disciplina e turma
-     */
-    public Planejamento criarPlanejamentoBasico(Long disciplinaId, Long turmaId, String semestre, Integer ano) {
-        Optional<Disciplina> disciplina = disciplinaRepository.findById(disciplinaId);
-        if (disciplina.isEmpty()) {
-            throw new RuntimeException("Disciplina não encontrada com ID: " + disciplinaId);
+        planejamentoRepository.deleteById(id);  
         }
-        
-        Optional<Turma> turma = turmaRepository.findById(turmaId);
-        if (turma.isEmpty()) {
-            throw new RuntimeException("Turma não encontrada com ID: " + turmaId);
-        }
-        
-        Planejamento planejamento = new Planejamento();
-        planejamento.setDisciplina(disciplina.get());
-        planejamento.setTurma(turma.get());
-        planejamento.setSemestre(semestre);
-        planejamento.setAno(ano);
-        planejamento.setDescricao("Planejamento para " + disciplina.get().getNome() + 
-                                 " - Turma " + turma.get().getNome() + 
-                                 " - " + semestre + "º semestre de " + ano);
-        
-        return salvar(planejamento);
-    }
-
-    /**
-     * Valida os dados do planejamento
-     */
-    private void validarDadosPlanejamento(Planejamento planejamento) {
+    
+    private void validarDadosPlanejamento(PlanejamentoDtoIn planejamento) {
         if (planejamento == null) {
-            throw new IllegalArgumentException("Planejamento não pode ser nulo");
+            throw new PlanejamentoException("Planejamento não pode ser nulo");
         }
         
         if (planejamento.getSemestre() == null || planejamento.getSemestre().trim().isEmpty()) {
@@ -226,11 +273,11 @@ public class PlanejamentoService {
             throw new IllegalArgumentException("Ano é obrigatório");
         }
         
-        if (planejamento.getDisciplina() == null || planejamento.getDisciplina().getId() == null) {
+        if (planejamento.getDisciplinaId() == null) {
             throw new IllegalArgumentException("Disciplina é obrigatória");
         }
         
-        if (planejamento.getTurma() == null || planejamento.getTurma().getId() == null) {
+        if (planejamento.getTurmaId() == null) {
             throw new IllegalArgumentException("Turma é obrigatória");
         }
         
@@ -254,48 +301,48 @@ public class PlanejamentoService {
     /**
      * Valida se disciplina e turma existem e estão ativas
      */
-    private void validarDisciplinaETurma(Disciplina disciplina, Turma turma) {
-        Optional<Disciplina> disciplinaExistente = disciplinaRepository.findById(disciplina.getId());
+    private void validarDisciplinaETurma(Long disciplinaId, Long turmaId) {
+        Optional<Disciplina> disciplinaExistente = disciplinaRepository.findById(disciplinaId);
         if (disciplinaExistente.isEmpty()) {
-            throw new RuntimeException("Disciplina não encontrada com ID: " + disciplina.getId());
+            throw new PlanejamentoException("Disciplina não encontrada com ID: " + disciplinaId);
         }
         
         if (!disciplinaExistente.get().getAtivo()) {
-            throw new RuntimeException("Não é possível criar planejamento para uma disciplina inativa");
+            throw new PlanejamentoException("Não é possível criar planejamento para uma disciplina inativa");
         }
         
-        Optional<Turma> turmaExistente = turmaRepository.findById(turma.getId());
+        Optional<Turma> turmaExistente = turmaRepository.findById(turmaId);
         if (turmaExistente.isEmpty()) {
-            throw new RuntimeException("Turma não encontrada com ID: " + turma.getId());
+            throw new PlanejamentoException("Turma não encontrada com ID: " + turmaId);
         }
         
         if (!turmaExistente.get().getAtivo()) {
-            throw new RuntimeException("Não é possível criar planejamento para uma turma inativa");
+            throw new PlanejamentoException("Não é possível criar planejamento para uma turma inativa");
         }
     }
     
     /**
      * Verifica se já existe planejamento para a combinação disciplina/turma/semestre/ano
      */
-    private void verificarPlanejamentoDuplicado(Planejamento planejamento) {
+    private void verificarPlanejamentoDuplicado(PlanejamentoDtoIn planejamento) {
         verificarPlanejamentoDuplicado(planejamento, null);
     }
     
     /**
      * Verifica se já existe planejamento para a combinação disciplina/turma/semestre/ano (excluindo um planejamento específico)
      */
-    private void verificarPlanejamentoDuplicado(Planejamento planejamento, Long planejamentoIdExcluir) {
+    private void verificarPlanejamentoDuplicado(PlanejamentoDtoIn planejamento, Long planejamentoIdExcluir) {
         Optional<Planejamento> planejamentoExistente = planejamentoRepository
             .findByDisciplinaIdAndTurmaIdAndSemestreAndAno(
-                planejamento.getDisciplina().getId(),
-                planejamento.getTurma().getId(),
+                planejamento.getDisciplinaId(),
+                planejamento.getTurmaId(),
                 planejamento.getSemestre().trim(),
                 planejamento.getAno()
             );
         
         if (planejamentoExistente.isPresent() && 
             (planejamentoIdExcluir == null || !planejamentoExistente.get().getId().equals(planejamentoIdExcluir))) {
-            throw new RuntimeException("Já existe um planejamento para esta disciplina, turma, semestre e ano");
+            throw new PlanejamentoException("Já existe um planejamento para esta disciplina, turma, semestre e ano");
         }
     }
 }

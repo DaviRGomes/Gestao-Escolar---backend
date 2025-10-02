@@ -48,4 +48,62 @@ public class Nota {
         this.registroAula = registroAula;
         this.aluno = aluno;
     }
+
+    // Getters explícitos
+    public Long getId() {
+        return id;
+    }
+
+    public BigDecimal getValor() {
+        return valor;
+    }
+
+    public TipoAvaliacao getTipo() {
+        return tipo;
+    }
+
+    public BigDecimal getPeso() {
+        return peso;
+    }
+
+    public String getObservacao() {
+        return observacao;
+    }
+
+    public RegistroAula getRegistroAula() {
+        return registroAula;
+    }
+
+    public Aluno getAluno() {
+        return aluno;
+    }
+
+    // Setters explícitos
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setValor(BigDecimal valor) {
+        this.valor = valor;
+    }
+
+    public void setTipo(TipoAvaliacao tipo) {
+        this.tipo = tipo;
+    }
+
+    public void setPeso(BigDecimal peso) {
+        this.peso = peso;
+    }
+
+    public void setObservacao(String observacao) {
+        this.observacao = observacao;
+    }
+
+    public void setRegistroAula(RegistroAula registroAula) {
+        this.registroAula = registroAula;
+    }
+
+    public void setAluno(Aluno aluno) {
+        this.aluno = aluno;
+    }
 }

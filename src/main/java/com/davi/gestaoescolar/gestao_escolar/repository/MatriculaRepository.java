@@ -22,4 +22,6 @@ public interface MatriculaRepository extends JpaRepository<Matricula, Long> {
     List<Matricula> findByDataMatriculaBetween(LocalDate dataInicio, LocalDate dataFim);
     
     List<Matricula> findByTurmaIdAndSituacao(Long turmaId, SituacaoMatricula situacao);
+    
+    List<Matricula> findByAlunoIdAndTurmaIdAndSituacao(Long alunoId, Long turmaId, SituacaoMatricula situacao);
 }

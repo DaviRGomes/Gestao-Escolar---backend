@@ -1,11 +1,19 @@
 package com.davi.gestaoescolar.gestao_escolar.controller;
 
-import com.davi.gestaoescolar.gestao_escolar.model.Matricula;
+import com.davi.gestaoescolar.gestao_escolar.dto.Matricula.MatriculaDtoIn;
+import com.davi.gestaoescolar.gestao_escolar.dto.Matricula.MatriculaDtoOut;
+import com.davi.gestaoescolar.gestao_escolar.model.enums.SituacaoMatricula;
 import com.davi.gestaoescolar.gestao_escolar.service.MatriculaService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.Valid;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/matriculas")
@@ -15,125 +23,118 @@ public class MatriculaController {
     @Autowired
     private MatriculaService matriculaService;
 
-    /**
-     * Realizar nova matrícula
-     */
+    // Listar todas as matrículas
+    @GetMapping
+    public ResponseEntity<List<MatriculaDtoOut>> listarTodas() {
+        List<MatriculaDtoOut> matriculas = matriculaService.listarTodas();
+        return ResponseEntity.ok(matriculas);
+    }
+
+    // Buscar matrícula por ID
+    @GetMapping("/{id}")
+    public ResponseEntity<Optional<MatriculaDtoOut>> buscarPorId(@PathVariable Long id) {
+        Optional<MatriculaDtoOut> matricula = matriculaService.buscarPorId(id);
+        return ResponseEntity.ok(matricula);
+    }
+
+    // Criar nova matrícula
     @PostMapping
-    public ResponseEntity<Matricula> matricular(@RequestBody Matricula matricula) {
-        try {
-            Matricula novaMatricula = matriculaService.matricular(matricula);
-            return new ResponseEntity<>(novaMatricula, HttpStatus.CREATED);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<MatriculaDtoOut> criarMatricula(@Valid @RequestBody MatriculaDtoIn matriculaDtoIn) {
+        MatriculaDtoOut novaMatricula = matriculaService.salvarMatricula(matriculaDtoIn);
+        return ResponseEntity.status(HttpStatus.CREATED).body(novaMatricula);
     }
 
-    /**
-     * Atualizar matrícula existente
-     */
+    // Atualizar matrícula
     @PutMapping("/{id}")
-    public ResponseEntity<Matricula> atualizar(@PathVariable Long id, @RequestBody Matricula matricula) {
-        try {
-            Matricula matriculaAtualizada = matriculaService.atualizar(id, matricula);
-            return new ResponseEntity<>(matriculaAtualizada, HttpStatus.OK);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<MatriculaDtoOut> atualizarMatricula(@PathVariable Long id, @Valid @RequestBody MatriculaDtoIn matriculaDtoIn) {
+        MatriculaDtoOut matriculaAtualizada = matriculaService.atualizarMatricula(id, matriculaDtoIn);
+        return ResponseEntity.ok(matriculaAtualizada);
     }
 
-    /**
-     * Desativar matrícula
-     */
-    @PatchMapping("/desativar/{id}")
-    public ResponseEntity<Void> desativar(@PathVariable Long id) {
-        try {
-            matriculaService.desativar(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    /**
-     * Colocar matrícula em processo
-     */
-    @PatchMapping("/em-processo/{id}")
-    public ResponseEntity<Void> colocarEmProcesso(@PathVariable Long id) {
-        try {
-            matriculaService.colocarEmProcesso(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    /**
-     * Ativar matrícula
-     */
-    @PatchMapping("/ativar/{id}")
-    public ResponseEntity<Void> ativar(@PathVariable Long id) {
-        try {
-            matriculaService.ativar(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    /**
-     * Finalizar matrícula
-     */
-    @PatchMapping("/finalizar/{id}")
-    public ResponseEntity<Void> finalizar(@PathVariable Long id) {
-        try {
-            matriculaService.finalizar(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    /**
-     * Transferir aluno para outra turma
-     */
-    @PatchMapping("/transferir/{id}/turma/{novaTurmaId}")
-    public ResponseEntity<Matricula> transferirTurma(@PathVariable Long id, @PathVariable Long novaTurmaId) {
-        try {
-            Matricula matriculaTransferida = matriculaService.transferirTurma(id, novaTurmaId);
-            return new ResponseEntity<>(matriculaTransferida, HttpStatus.OK);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    /**
-     * Deletar matrícula permanentemente
-     */
+    // Deletar matrícula
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletar(@PathVariable Long id) {
-        try {
-            matriculaService.deletar(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<Void> deletarMatricula(@PathVariable Long id) {
+        matriculaService.deletar(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // Buscar matrículas por aluno
+    @GetMapping("/aluno/{alunoId}")
+    public ResponseEntity<List<MatriculaDtoOut>> buscarPorAluno(@PathVariable Long alunoId) {
+        List<MatriculaDtoOut> matriculas = matriculaService.buscarPorAluno(alunoId);
+        return ResponseEntity.ok(matriculas);
+    }
+
+    // Buscar matrículas por turma
+    @GetMapping("/turma/{turmaId}")
+    public ResponseEntity<List<MatriculaDtoOut>> buscarPorTurma(@PathVariable Long turmaId) {
+        List<MatriculaDtoOut> matriculas = matriculaService.buscarPorTurma(turmaId);
+        return ResponseEntity.ok(matriculas);
+    }
+
+    // Buscar matrículas por situação
+    @GetMapping("/situacao/{situacao}")
+    public ResponseEntity<List<MatriculaDtoOut>> buscarPorSituacao(@PathVariable SituacaoMatricula situacao) {
+        List<MatriculaDtoOut> matriculas = matriculaService.buscarPorSituacao(situacao);
+        return ResponseEntity.ok(matriculas);
+    }
+
+    // Buscar matrículas por data específica
+    @GetMapping("/data/{data}")
+    public ResponseEntity<List<MatriculaDtoOut>> buscarPorData(
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data) {
+        List<MatriculaDtoOut> matriculas = matriculaService.buscarPorData(data);
+        return ResponseEntity.ok(matriculas);
+    }
+
+    // Buscar matrículas por período
+    @GetMapping("/periodo")
+    public ResponseEntity<List<MatriculaDtoOut>> buscarPorPeriodo(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim) {
+        List<MatriculaDtoOut> matriculas = matriculaService.buscarPorPeriodo(dataInicio, dataFim);
+        return ResponseEntity.ok(matriculas);
+    }
+
+    // Buscar matrículas ativas por turma
+    @GetMapping("/turma/{turmaId}/ativas")
+    public ResponseEntity<List<MatriculaDtoOut>> buscarAtivasPorTurma(@PathVariable Long turmaId) {
+        List<MatriculaDtoOut> matriculas = matriculaService.buscarAtivasPorTurma(turmaId);
+        return ResponseEntity.ok(matriculas);
+    }
+
+    // Ativar matrícula
+    @PatchMapping("/{id}/ativar")
+    public ResponseEntity<Void> ativarMatricula(@PathVariable Long id) {
+        matriculaService.ativar(id);
+        return ResponseEntity.ok().build();
+    }
+
+    // Desativar matrícula
+    @PatchMapping("/{id}/desativar")
+    public ResponseEntity<Void> desativarMatricula(@PathVariable Long id) {
+        matriculaService.desativar(id);
+        return ResponseEntity.ok().build();
+    }
+
+    // Colocar matrícula em processo
+    @PatchMapping("/{id}/processo")
+    public ResponseEntity<Void> colocarEmProcesso(@PathVariable Long id) {
+        matriculaService.colocarEmProcesso(id);
+        return ResponseEntity.ok().build();
+    }
+
+    // Finalizar matrícula
+    @PatchMapping("/{id}/finalizar")
+    public ResponseEntity<Void> finalizarMatricula(@PathVariable Long id) {
+        matriculaService.finalizar(id);
+        return ResponseEntity.ok().build();
+    }
+
+    // Transferir aluno para outra turma
+    @PatchMapping("/{id}/transferir/{novaTurmaId}")
+    public ResponseEntity<MatriculaDtoOut> transferirTurma(@PathVariable Long id, @PathVariable Long novaTurmaId) {
+        MatriculaDtoOut matriculaTransferida = matriculaService.transferirTurma(id, novaTurmaId);
+        return ResponseEntity.ok(matriculaTransferida);
     }
 }

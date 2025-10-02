@@ -13,7 +13,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/presencas")
-@CrossOrigin(origins = "*")
 public class PresencaController {
 
     @Autowired

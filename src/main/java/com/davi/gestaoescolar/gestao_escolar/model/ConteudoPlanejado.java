@@ -58,5 +58,77 @@ public class ConteudoPlanejado {
         this.observacoes = observacoes;
     }
 
+    // Getters explícitos
+    public Long getId() {
+        return id;
+    }
 
+    public String getConteudo() {
+        return conteudo;
+    }
+
+    public LocalDate getDataPrevista() {
+        return dataPrevista;
+    }
+
+    public LocalDate getDataConclusao() {
+        return dataConclusao;
+    }
+
+    public Boolean getConcluido() {
+        return concluido;
+    }
+
+    public String getObservacoes() {
+        return observacoes;
+    }
+
+    public Integer getOrdemApresentacao() {
+        return ordemApresentacao;
+    }
+
+    public Planejamento getPlanejamento() {
+        return planejamento;
+    }
+
+    public List<RegistroAula> getRegistrosAula() {
+        return registrosAula;
+    }
+
+    // Setters explícitos
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setConteudo(String conteudo) {
+        this.conteudo = conteudo;
+    }
+
+    public void setDataPrevista(LocalDate dataPrevista) {
+        this.dataPrevista = dataPrevista;
+    }
+
+    public void setDataConclusao(LocalDate dataConclusao) {
+        this.dataConclusao = dataConclusao;
+    }
+
+    public void setConcluido(Boolean concluido) {
+        this.concluido = concluido;
+    }
+
+    public void setObservacoes(String observacoes) {
+        this.observacoes = observacoes;
+    }
+
+    public void setOrdemApresentacao(Integer ordemApresentacao) {
+        this.ordemApresentacao = ordemApresentacao;
+    }
+
+    public void setPlanejamento(Planejamento planejamento) {
+        this.planejamento = planejamento;
+    }
+
+    public void setRegistrosAula(List<RegistroAula> registrosAula) {
+        this.registrosAula = registrosAula;
+    }
 }

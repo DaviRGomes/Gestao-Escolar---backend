@@ -13,7 +13,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/turmas")
-@CrossOrigin(origins = "*")
 public class TurmaController {
 
     @Autowired

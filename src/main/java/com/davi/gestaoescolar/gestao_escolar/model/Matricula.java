@@ -14,6 +14,7 @@ import java.time.LocalDate;
 @Table(name = "matricula")
 @Getter
 @Setter
+
 public class Matricula {
 
     @Id

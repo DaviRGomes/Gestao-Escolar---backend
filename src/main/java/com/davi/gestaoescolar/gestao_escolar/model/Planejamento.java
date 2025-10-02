@@ -2,6 +2,7 @@ package com.davi.gestaoescolar.gestao_escolar.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDateTime;
@@ -51,22 +52,90 @@ public class Planejamento {
     @JsonIgnoreProperties({"planejamento", "registrosAula"})
     private List<ConteudoPlanejado> conteudos = new ArrayList<>();
 
-    // Construtores
-    public Planejamento() {
-        this.dataCriacao = LocalDateTime.now();
-    }
-
-    public Planejamento(String semestre, Integer ano, Disciplina disciplina, Turma turma, Professor professor) {
-        this();
+    public Planejamento(String descricao, String semestre, Integer ano, LocalDateTime dataCriacao,
+                        LocalDateTime dataAtualizacao, Disciplina disciplina,
+                        Turma turma, List<ConteudoPlanejado> conteudos) {
+        this.descricao = descricao;
         this.semestre = semestre;
         this.ano = ano;
+        this.dataCriacao = dataCriacao;
+        this.dataAtualizacao = dataAtualizacao;
         this.disciplina = disciplina;
         this.turma = turma;
+        this.conteudos = conteudos;
     }
 
-    public Planejamento(String descricao, String semestre, Integer ano, Disciplina disciplina, Turma turma, Professor professor) {
-        this(semestre, ano, disciplina, turma, professor);
+    // Getters explícitos
+    public Long getId() {
+        return id;
+    }
+
+    public String getDescricao() {
+        return descricao;
+    }
+
+    public String getSemestre() {
+        return semestre;
+    }
+
+    public Integer getAno() {
+        return ano;
+    }
+
+    public LocalDateTime getDataCriacao() {
+        return dataCriacao;
+    }
+
+    public LocalDateTime getDataAtualizacao() {
+        return dataAtualizacao;
+    }
+
+    public Disciplina getDisciplina() {
+        return disciplina;
+    }
+
+    public Turma getTurma() {
+        return turma;
+    }
+
+    public List<ConteudoPlanejado> getConteudos() {
+        return conteudos;
+    }
+
+    // Setters explícitos
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setDescricao(String descricao) {
         this.descricao = descricao;
     }
 
+    public void setSemestre(String semestre) {
+        this.semestre = semestre;
+    }
+
+    public void setAno(Integer ano) {
+        this.ano = ano;
+    }
+
+    public void setDataCriacao(LocalDateTime dataCriacao) {
+        this.dataCriacao = dataCriacao;
+    }
+
+    public void setDataAtualizacao(LocalDateTime dataAtualizacao) {
+        this.dataAtualizacao = dataAtualizacao;
+    }
+
+    public void setDisciplina(Disciplina disciplina) {
+        this.disciplina = disciplina;
+    }
+
+    public void setTurma(Turma turma) {
+        this.turma = turma;
+    }
+
+    public void setConteudos(List<ConteudoPlanejado> conteudos) {
+        this.conteudos = conteudos;
+    }
 }

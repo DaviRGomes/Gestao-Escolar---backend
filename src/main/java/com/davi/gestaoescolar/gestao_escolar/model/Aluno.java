@@ -59,6 +59,11 @@ public class Aluno {
         this.cpf = cpf;
     }
 
+    public String getEmail() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getEmail'");
+    }
+
 
 
 }

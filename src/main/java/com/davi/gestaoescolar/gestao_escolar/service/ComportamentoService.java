@@ -1,9 +1,19 @@
 package com.davi.gestaoescolar.gestao_escolar.service;
 
+import com.davi.gestaoescolar.gestao_escolar.dto.Comportamento.ComportamentoDtoIn;
+import com.davi.gestaoescolar.gestao_escolar.dto.Comportamento.ComportamentoDtoOut;
+import com.davi.gestaoescolar.gestao_escolar.dto.Aluno.AlunoDtoOut;
+import com.davi.gestaoescolar.gestao_escolar.dto.Aluno.AlunoDtoSimples;
+import com.davi.gestaoescolar.gestao_escolar.dto.Professor.ProfessorDtoOut;
+import com.davi.gestaoescolar.gestao_escolar.dto.Professor.ProfessorDtoSimples;
+import com.davi.gestaoescolar.gestao_escolar.exception.ComportamentoException;
+import com.davi.gestaoescolar.gestao_escolar.exception.GlobalException;
+import com.davi.gestaoescolar.gestao_escolar.model.Aluno;
 import com.davi.gestaoescolar.gestao_escolar.model.Comportamento;
 import com.davi.gestaoescolar.gestao_escolar.model.Professor;
 import com.davi.gestaoescolar.gestao_escolar.model.enums.Gravidade;
 import com.davi.gestaoescolar.gestao_escolar.model.enums.TipoComportamento;
+import com.davi.gestaoescolar.gestao_escolar.repository.AlunoRepository;
 import com.davi.gestaoescolar.gestao_escolar.repository.ComportamentoRepository;
 import com.davi.gestaoescolar.gestao_escolar.repository.ProfessorRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,134 +34,197 @@ public class ComportamentoService {
     
     @Autowired
     private ProfessorRepository professorRepository;
+    
+    @Autowired
+    private AlunoRepository alunoRepository;
+
+    /**
+     * Métodos auxiliares para conversão de DTOs
+     */
+    private List<ComportamentoDtoOut> toDtos(List<Comportamento> comportamentos) {
+        return comportamentos.stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    private ComportamentoDtoOut toDTO(Comportamento comportamento) {
+        ProfessorDtoSimples professorDto = new ProfessorDtoSimples(
+                comportamento.getProfessor().getId(),
+                comportamento.getProfessor().getNome()
+        );
+
+        AlunoDtoSimples alunoDto = new AlunoDtoSimples(
+                comportamento.getAluno().getId(),
+                comportamento.getAluno().getNome()
+        );
+
+        return new ComportamentoDtoOut(
+                comportamento.getId(),
+                comportamento.getDescricao(),
+                comportamento.getDate(),
+                comportamento.getTipo(),
+                comportamento.getNivel(),
+                professorDto,
+                alunoDto
+        );
+    }
+
+    private Optional<ComportamentoDtoOut> toDTO(Optional<Comportamento> comportamento) {
+        return comportamento.map(this::toDTO);
+    }
 
     /**
      * Salva um novo registro de comportamento
      */
-    public Comportamento salvar(Comportamento comportamento) {
-        validarDadosComportamento(comportamento);
-        validarProfessor(comportamento.getProfessor());
+    public ComportamentoDtoOut salvar(ComportamentoDtoIn comportamentoDto) {
+        validarDadosComportamento(comportamentoDto);
         
-        // Define a data como hoje se não foi informada
-        if (comportamento.getDate() == null) {
-            comportamento.setDate(LocalDate.now());
-        }
+        Professor professor = buscarProfessor(comportamentoDto.getProfessorId());
+        Aluno aluno = buscarAluno(comportamentoDto.getAlunoId());
         
-        // Define nível padrão se não foi informado
-        if (comportamento.getNivel() == null) {
-            comportamento.setNivel(Gravidade.BAIXA);
-        }
+        validarProfessor(professor);
+        validarAluno(aluno);
         
-        return comportamentoRepository.save(comportamento);
+        Comportamento comportamento = new Comportamento();
+        comportamento.setDescricao(comportamentoDto.getDescricao());
+        comportamento.setDate(comportamentoDto.getDate() != null ? comportamentoDto.getDate() : LocalDate.now());
+        comportamento.setTipo(comportamentoDto.getTipo());
+        comportamento.setNivel(comportamentoDto.getNivel() != null ? comportamentoDto.getNivel() : Gravidade.BAIXA);
+        comportamento.setProfessor(professor);
+        comportamento.setAluno(aluno);
+        
+        Comportamento comportamentoSalvo = comportamentoRepository.save(comportamento);
+        return toDTO(comportamentoSalvo);
     }
 
     /**
      * Atualiza um registro de comportamento existente
      */
-    public Comportamento atualizar(Long id, Comportamento comportamentoAtualizado) {
-        Optional<Comportamento> comportamentoExistente = comportamentoRepository.findById(id);
-        if (comportamentoExistente.isEmpty()) {
-            throw new RuntimeException("Comportamento não encontrado com ID: " + id);
-        }
+    public ComportamentoDtoOut atualizar(Long id, ComportamentoDtoIn comportamentoDto) {
+        Comportamento comportamento = comportamentoRepository.findById(id)
+                .orElseThrow(() -> new ComportamentoException.ComportamentoNaoEncontradoException(id));
 
-        validarDadosComportamento(comportamentoAtualizado);
-        validarProfessor(comportamentoAtualizado.getProfessor());
+        validarDadosComportamento(comportamentoDto);
         
-        Comportamento comportamento = comportamentoExistente.get();
-        comportamento.setDescricao(comportamentoAtualizado.getDescricao());
-        comportamento.setDate(comportamentoAtualizado.getDate());
-        comportamento.setTipo(comportamentoAtualizado.getTipo());
-        comportamento.setNivel(comportamentoAtualizado.getNivel());
-        comportamento.setProfessor(comportamentoAtualizado.getProfessor());
-        comportamento.setAluno(comportamentoAtualizado.getAluno());
+        Professor professor = buscarProfessor(comportamentoDto.getProfessorId());
+        Aluno aluno = buscarAluno(comportamentoDto.getAlunoId());
         
-        return comportamentoRepository.save(comportamento);
+        validarProfessor(professor);
+        validarAluno(aluno);
+        
+        comportamento.setDescricao(comportamentoDto.getDescricao());
+        comportamento.setDate(comportamentoDto.getDate());
+        comportamento.setTipo(comportamentoDto.getTipo());
+        comportamento.setNivel(comportamentoDto.getNivel());
+        comportamento.setProfessor(professor);
+        comportamento.setAluno(aluno);
+        
+        Comportamento comportamentoAtualizado = comportamentoRepository.save(comportamento);
+        return toDTO(comportamentoAtualizado);
     }
 
     /**
      * Busca comportamento por ID
      */
     @Transactional(readOnly = true)
-    public Optional<Comportamento> buscarPorId(Long id) {
-        return comportamentoRepository.findById(id);
+    public Optional<ComportamentoDtoOut> buscarPorId(Long id) {
+        return toDTO(comportamentoRepository.findById(id));
     }
-
-   
 
     /**
      * Busca comportamentos por data
      */
     @Transactional(readOnly = true)
-    public List<Comportamento> buscarPorData(LocalDate data) {
+    public List<ComportamentoDtoOut> buscarPorData(LocalDate data) {
         if (data == null) {
-            throw new IllegalArgumentException("Data não pode ser nula");
+            throw new GlobalException.DadosInvalidosException("Data não pode ser nula");
         }
-        return comportamentoRepository.findByDate(data);
+        return toDtos(comportamentoRepository.findByDate(data));
     }
 
     /**
      * Busca comportamentos por período
      */
     @Transactional(readOnly = true)
-    public List<Comportamento> buscarPorPeriodo(LocalDate dataInicio, LocalDate dataFim) {
+    public List<ComportamentoDtoOut> buscarPorPeriodo(LocalDate dataInicio, LocalDate dataFim) {
         if (dataInicio == null || dataFim == null) {
-            throw new IllegalArgumentException("Datas de início e fim não podem ser nulas");
+            throw new GlobalException.DadosInvalidosException("Datas de início e fim são obrigatórias");
         }
         if (dataInicio.isAfter(dataFim)) {
-            throw new IllegalArgumentException("Data de início não pode ser posterior à data de fim");
+            throw new GlobalException.DadosInvalidosException("Data de início não pode ser posterior à data de fim");
         }
-        return comportamentoRepository.findByDateBetween(dataInicio, dataFim);
+        return toDtos(comportamentoRepository.findByDateBetween(dataInicio, dataFim));
+    }
+
+    /**
+     * Busca comportamentos por tipo
+     */
+    @Transactional(readOnly = true)
+    public List<ComportamentoDtoOut> buscarPorTipo(TipoComportamento tipo) {
+        if (tipo == null) {
+            throw new GlobalException.DadosInvalidosException("Tipo de comportamento não pode ser nulo");
+        }
+        return toDtos(comportamentoRepository.findByTipo(tipo));
+    }
+
+    /**
+     * Busca comportamentos por nível de gravidade
+     */
+    @Transactional(readOnly = true)
+    public List<ComportamentoDtoOut> buscarPorNivel(Gravidade nivel) {
+        if (nivel == null) {
+            throw new GlobalException.DadosInvalidosException("Nível de gravidade não pode ser nulo");
+        }
+        return toDtos(comportamentoRepository.findByNivel(nivel));
     }
 
     /**
      * Busca comportamentos por professor
      */
     @Transactional(readOnly = true)
-    public List<Comportamento> buscarPorProfessor(Long professorId) {
+    public List<ComportamentoDtoOut> buscarPorProfessor(Long professorId) {
         if (professorId == null) {
-            throw new IllegalArgumentException("ID do professor não pode ser nulo");
+            throw new GlobalException.DadosInvalidosException("ID do professor não pode ser nulo");
         }
-        return comportamentoRepository.findByProfessorId(professorId);
+        return toDtos(comportamentoRepository.findByProfessorId(professorId));
+    }
+
+    /**
+     * Busca comportamentos por aluno
+     */
+    @Transactional(readOnly = true)
+    public List<ComportamentoDtoOut> buscarPorAluno(Long alunoId) {
+        if (alunoId == null) {
+            throw new GlobalException.DadosInvalidosException("ID do aluno não pode ser nulo");
+        }
+        return toDtos(comportamentoRepository.findByAlunoId(alunoId));
+    }
+
+    /**
+     * Busca comportamentos por turma
+     */
+    @Transactional(readOnly = true)
+    public List<ComportamentoDtoOut> buscarPorTurma(Long turmaId) {
+        if (turmaId == null) {
+            throw new GlobalException.DadosInvalidosException("ID da turma não pode ser nulo");
+        }
+        return toDtos(comportamentoRepository.findByTurmaId(turmaId));
     }
 
     /**
      * Lista todos os comportamentos
      */
     @Transactional(readOnly = true)
-    public List<Comportamento> listarTodos() {
-        return comportamentoRepository.findAll();
+    public List<ComportamentoDtoOut> listarTodos() {
+        return toDtos(comportamentoRepository.findAll());
     }
-
-    
 
     /**
      * Busca comportamentos de hoje
      */
     @Transactional(readOnly = true)
-    public List<Comportamento> buscarComportamentosDeHoje() {
-        return comportamentoRepository.findByDate(LocalDate.now());
-    }
-
-    /**
-     * Busca comportamentos da semana atual
-     */
-    @Transactional(readOnly = true)
-    public List<Comportamento> buscarComportamentosDaSemana() {
-        LocalDate hoje = LocalDate.now();
-        LocalDate inicioSemana = hoje.minusDays(hoje.getDayOfWeek().getValue() - 1);
-        LocalDate fimSemana = inicioSemana.plusDays(6);
-        return comportamentoRepository.findByDateBetween(inicioSemana, fimSemana);
-    }
-
-    /**
-     * Busca comportamentos do mês atual
-     */
-    @Transactional(readOnly = true)
-    public List<Comportamento> buscarComportamentosDoMes() {
-        LocalDate hoje = LocalDate.now();
-        LocalDate inicioMes = hoje.withDayOfMonth(1);
-        LocalDate fimMes = hoje.withDayOfMonth(hoje.lengthOfMonth());
-        return comportamentoRepository.findByDateBetween(inicioMes, fimMes);
+    public List<ComportamentoDtoOut> buscarComportamentosDeHoje() {
+        return toDtos(comportamentoRepository.findByDate(LocalDate.now()));
     }
 
     /**
@@ -159,60 +232,17 @@ public class ComportamentoService {
      */
     public void deletar(Long id) {
         if (!comportamentoRepository.existsById(id)) {
-            throw new RuntimeException("Comportamento não encontrado com ID: " + id);
+            throw new ComportamentoException.ComportamentoNaoEncontradoException(id);
         }
         comportamentoRepository.deleteById(id);
     }
-
-
-    /**
-     * Gera relatório de comportamentos por período
-     */
-    @Transactional(readOnly = true)
-    public String gerarRelatorioComportamentos(LocalDate dataInicio, LocalDate dataFim) {
-        List<Comportamento> comportamentos = buscarPorPeriodo(dataInicio, dataFim);
-        
-        long positivos = comportamentos.stream()
-            .mapToLong(c -> c.getTipo() == TipoComportamento.POSITIVO ? 1 : 0)
-            .sum();
-        
-        long negativos = comportamentos.stream()
-            .mapToLong(c -> c.getTipo() == TipoComportamento.NEGATIVO ? 1 : 0)
-            .sum();
-        
-        long graves = comportamentos.stream()
-            .mapToLong(c -> c.getNivel() == Gravidade.ALTA ? 1 : 0)
-            .sum();
-        
-        return String.format(
-            "Relatório de Comportamentos (%s a %s):\n" +
-            "Total de registros: %d\n" +
-            "Comportamentos positivos: %d\n" +
-            "Comportamentos negativos: %d\n" +
-            "Comportamentos graves: %d\n" +
-            "Percentual positivo: %.2f%%",
-            dataInicio, dataFim, comportamentos.size(), positivos, negativos, graves,
-            comportamentos.size() > 0 ? (positivos * 100.0 / comportamentos.size()) : 0.0
-        );
-    }
-    /**
-     * Gera todos as anotações - comportamentos do aluno
-     */
-    @Transactional(readOnly = true)
-    public List<Comportamento> buscarTodosOsComportamentosDoAluno(Long alunoId) {
-        if (alunoId == null) {
-            throw new IllegalArgumentException("ID do aluno não pode ser nulo");
-        }
-        return comportamentoRepository.findByAlunoId(alunoId);
-    }
-
 
     /**
      * Gera relatório de comportamentos por professor
      */
     @Transactional(readOnly = true)
     public String gerarRelatorioPorProfessor(Long professorId, LocalDate dataInicio, LocalDate dataFim) {
-        List<Comportamento> comportamentos = buscarPorProfessor(professorId).stream()
+        List<ComportamentoDtoOut> comportamentos = buscarPorProfessor(professorId).stream()
             .filter(c -> !c.getDate().isBefore(dataInicio) && !c.getDate().isAfter(dataFim))
             .collect(Collectors.toList());
         
@@ -234,47 +264,68 @@ public class ComportamentoService {
     }
 
     /**
+     * Métodos auxiliares privados
+     */
+    private Professor buscarProfessor(Long professorId) {
+        return professorRepository.findById(professorId)
+                .orElseThrow(() -> new ComportamentoException.ProfessorInvalidoException("Professor não encontrado com ID: " + professorId));
+    }
+
+    private Aluno buscarAluno(Long alunoId) {
+        return alunoRepository.findById(alunoId)
+                .orElseThrow(() -> new ComportamentoException.AlunoInvalidoException("Aluno não encontrado com ID: " + alunoId));
+    }
+
+    /**
      * Valida os dados do comportamento
      */
-    private void validarDadosComportamento(Comportamento comportamento) {
-        if (comportamento == null) {
-            throw new IllegalArgumentException("Comportamento não pode ser nulo");
+    private void validarDadosComportamento(ComportamentoDtoIn comportamentoDto) {
+        if (comportamentoDto == null) {
+            throw new GlobalException.DadosInvalidosException("Dados do comportamento não podem ser nulos");
         }
         
-        if (comportamento.getDescricao() == null || comportamento.getDescricao().trim().isEmpty()) {
-            throw new IllegalArgumentException("Descrição do comportamento é obrigatória");
+        if (comportamentoDto.getDescricao() == null || comportamentoDto.getDescricao().trim().isEmpty()) {
+            throw new GlobalException.DadosInvalidosException("Descrição do comportamento é obrigatória");
         }
         
-        if (comportamento.getTipo() == null) {
-            throw new IllegalArgumentException("Tipo de comportamento é obrigatório");
+        if (comportamentoDto.getTipo() == null) {
+            throw new GlobalException.DadosInvalidosException("Tipo de comportamento é obrigatório");
         }
         
-        if (comportamento.getProfessor() == null || comportamento.getProfessor().getId() == null) {
-            throw new IllegalArgumentException("Professor é obrigatório");
+        if (comportamentoDto.getProfessorId() == null) {
+            throw new GlobalException.DadosInvalidosException("Professor é obrigatório");
+        }
+        
+        if (comportamentoDto.getAlunoId() == null) {
+            throw new GlobalException.DadosInvalidosException("Aluno é obrigatório");
         }
         
         // Validação da data (não pode ser muito futura)
-        if (comportamento.getDate() != null && comportamento.getDate().isAfter(LocalDate.now().plusDays(1))) {
-            throw new IllegalArgumentException("Data do comportamento não pode ser no futuro");
+        if (comportamentoDto.getDate() != null && comportamentoDto.getDate().isAfter(LocalDate.now().plusDays(1))) {
+            throw new GlobalException.DadosInvalidosException("Data do comportamento não pode ser no futuro");
         }
         
         // Validação do tamanho da descrição
-        if (comportamento.getDescricao().length() > 1000) {
-            throw new IllegalArgumentException("Descrição não pode exceder 1000 caracteres");
+        if (comportamentoDto.getDescricao().length() > 1000) {
+            throw new GlobalException.DadosInvalidosException("Descrição não pode exceder 1000 caracteres");
         }
     }
-    
+
     /**
      * Valida se professor existe e está ativo
      */
     private void validarProfessor(Professor professor) {
-        Optional<Professor> professorExistente = professorRepository.findById(professor.getId());
-        if (professorExistente.isEmpty()) {
-            throw new RuntimeException("Professor não encontrado com ID: " + professor.getId());
+        if (!professor.getAtivo()) {
+            throw new ComportamentoException.ProfessorInvalidoException("Não é possível registrar comportamento para um professor inativo");
         }
-        
-        if (!professorExistente.get().getAtivo()) {
-            throw new RuntimeException("Não é possível registrar comportamento para um professor inativo");
+    }
+
+    /**
+     * Valida se aluno existe e está ativo
+     */
+    private void validarAluno(Aluno aluno) {
+        if (!aluno.getAtivo()) {
+            throw new ComportamentoException.AlunoInvalidoException("Não é possível registrar comportamento para um aluno inativo");
         }
     }
 }

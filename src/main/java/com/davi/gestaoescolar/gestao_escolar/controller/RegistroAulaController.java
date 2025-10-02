@@ -14,7 +14,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/registros-aula")
-@CrossOrigin(origins = "*")
 public class RegistroAulaController {
 
     @Autowired

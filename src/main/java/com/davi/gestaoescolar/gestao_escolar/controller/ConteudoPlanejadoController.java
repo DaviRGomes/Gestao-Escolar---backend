@@ -1,14 +1,15 @@
 package com.davi.gestaoescolar.gestao_escolar.controller;
 
-import com.davi.gestaoescolar.gestao_escolar.model.ConteudoPlanejado;
+import com.davi.gestaoescolar.gestao_escolar.dto.ConteudoPlanejado.ConteudoPlanejadoDtoIn;
+import com.davi.gestaoescolar.gestao_escolar.dto.ConteudoPlanejado.ConteudoPlanejadoDtoOut;
 import com.davi.gestaoescolar.gestao_escolar.service.ConteudoPlanejadoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Controller para gerenciar operações relacionadas aos Conteúdos Planejados
@@ -18,7 +19,6 @@ import java.util.Optional;
  */
 @RestController
 @RequestMapping("/api/conteudos-planejados")
-@CrossOrigin(origins = "*")
 public class ConteudoPlanejadoController {
 
     @Autowired
@@ -27,42 +27,26 @@ public class ConteudoPlanejadoController {
     /**
      * Criar um novo conteúdo planejado
      * 
-     * @param conteudoPlanejado Dados do conteúdo planejado a ser criado
+     * @param dto Dados do conteúdo planejado
      * @return ResponseEntity com o conteúdo planejado criado
      */
     @PostMapping
-    public ResponseEntity<ConteudoPlanejado> criarConteudoPlanejado(@RequestBody ConteudoPlanejado conteudoPlanejado) {
-        try {
-            ConteudoPlanejado novoConteudo = conteudoPlanejadoService.salvar(conteudoPlanejado);
-            return new ResponseEntity<>(novoConteudo, HttpStatus.CREATED);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(null, HttpStatus.CONFLICT);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<ConteudoPlanejadoDtoOut> salvar(@RequestBody ConteudoPlanejadoDtoIn dto) {
+        ConteudoPlanejadoDtoOut novoConteudo = conteudoPlanejadoService.salvar(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(novoConteudo);
     }
 
     /**
      * Atualizar um conteúdo planejado existente
      * 
-     * @param id ID do conteúdo planejado a ser atualizado
-     * @param conteudoPlanejado Novos dados do conteúdo planejado
+     * @param id ID do conteúdo planejado
+     * @param dto Dados atualizados
      * @return ResponseEntity com o conteúdo planejado atualizado
      */
     @PutMapping("/{id}")
-    public ResponseEntity<ConteudoPlanejado> atualizarConteudoPlanejado(@PathVariable Long id, @RequestBody ConteudoPlanejado conteudoPlanejado) {
-        try {
-            ConteudoPlanejado conteudoAtualizado = conteudoPlanejadoService.atualizar(id, conteudoPlanejado);
-            return new ResponseEntity<>(conteudoAtualizado, HttpStatus.OK);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<ConteudoPlanejadoDtoOut> atualizar(@PathVariable Long id, @RequestBody ConteudoPlanejadoDtoIn dto) {
+        ConteudoPlanejadoDtoOut conteudoAtualizado = conteudoPlanejadoService.atualizar(id, dto);
+        return ResponseEntity.ok(conteudoAtualizado);
     }
 
     /**
@@ -72,19 +56,9 @@ public class ConteudoPlanejadoController {
      * @return ResponseEntity com o conteúdo planejado encontrado
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ConteudoPlanejado> buscarPorId(@PathVariable Long id) {
-        try {
-            Optional<ConteudoPlanejado> conteudo = conteudoPlanejadoService.buscarPorId(id);
-            if (conteudo.isPresent()) {
-                return new ResponseEntity<>(conteudo.get(), HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
-            }
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<ConteudoPlanejadoDtoOut> buscarPorId(@PathVariable Long id) {
+        ConteudoPlanejadoDtoOut conteudo = conteudoPlanejadoService.buscarPorId(id);
+        return ResponseEntity.ok(conteudo);
     }
 
     /**
@@ -93,13 +67,9 @@ public class ConteudoPlanejadoController {
      * @return ResponseEntity com a lista de conteúdos planejados
      */
     @GetMapping
-    public ResponseEntity<List<ConteudoPlanejado>> listarTodos() {
-        try {
-            List<ConteudoPlanejado> conteudos = conteudoPlanejadoService.listarTodos();
-            return new ResponseEntity<>(conteudos, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<List<ConteudoPlanejadoDtoOut>> listarTodos() {
+        List<ConteudoPlanejadoDtoOut> conteudos = conteudoPlanejadoService.listarTodos();
+        return ResponseEntity.ok(conteudos);
     }
 
     /**
@@ -109,15 +79,9 @@ public class ConteudoPlanejadoController {
      * @return ResponseEntity com a lista de conteúdos planejados
      */
     @GetMapping("/planejamento/{planejamentoId}")
-    public ResponseEntity<List<ConteudoPlanejado>> buscarPorPlanejamento(@PathVariable Long planejamentoId) {
-        try {
-            List<ConteudoPlanejado> conteudos = conteudoPlanejadoService.buscarPorPlanejamento(planejamentoId);
-            return new ResponseEntity<>(conteudos, HttpStatus.OK);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<List<ConteudoPlanejadoDtoOut>> buscarPorPlanejamento(@PathVariable Long planejamentoId) {
+        List<ConteudoPlanejadoDtoOut> conteudos = conteudoPlanejadoService.buscarPorPlanejamento(planejamentoId);
+        return ResponseEntity.ok(conteudos);
     }
 
     /**
@@ -127,16 +91,10 @@ public class ConteudoPlanejadoController {
      * @return ResponseEntity com a lista de conteúdos planejados
      */
     @GetMapping("/data/{data}")
-    public ResponseEntity<List<ConteudoPlanejado>> buscarPorData(@PathVariable String data) {
-        try {
-            java.time.LocalDate dataPrevista = java.time.LocalDate.parse(data);
-            List<ConteudoPlanejado> conteudos = conteudoPlanejadoService.buscarPorData(dataPrevista);
-            return new ResponseEntity<>(conteudos, HttpStatus.OK);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<List<ConteudoPlanejadoDtoOut>> buscarPorData(@PathVariable String data) {
+        LocalDate dataPrevista = LocalDate.parse(data);
+        List<ConteudoPlanejadoDtoOut> conteudos = conteudoPlanejadoService.buscarPorData(dataPrevista);
+        return ResponseEntity.ok(conteudos);
     }
 
     /**
@@ -164,16 +122,8 @@ public class ConteudoPlanejadoController {
      * @return ResponseEntity indicando o resultado da operação
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletarConteudoPlanejado(@PathVariable Long id) {
-        try {
-            conteudoPlanejadoService.deletar(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<Void> deletar(@PathVariable Long id) {
+        conteudoPlanejadoService.deletar(id);
+        return ResponseEntity.noContent().build();
     }
 }

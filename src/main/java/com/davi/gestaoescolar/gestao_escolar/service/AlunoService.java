@@ -1,7 +1,16 @@
 package com.davi.gestaoescolar.gestao_escolar.service;
 
+import com.davi.gestaoescolar.gestao_escolar.dto.Aluno.AlunoDtoIn;
+import com.davi.gestaoescolar.gestao_escolar.dto.Aluno.AlunoDtoOut;
+import com.davi.gestaoescolar.gestao_escolar.dto.Matricula.MatriculaDtoSimples;
+import com.davi.gestaoescolar.gestao_escolar.dto.Responsavel.ResponsavelDtoSimples;
+import com.davi.gestaoescolar.gestao_escolar.exception.AlunoException;
 import com.davi.gestaoescolar.gestao_escolar.model.Aluno;
+import com.davi.gestaoescolar.gestao_escolar.model.AlunoResponsavel;
+import com.davi.gestaoescolar.gestao_escolar.model.Responsavel;
 import com.davi.gestaoescolar.gestao_escolar.repository.AlunoRepository;
+import com.davi.gestaoescolar.gestao_escolar.repository.AlunoResponsavelRepository;
+import com.davi.gestaoescolar.gestao_escolar.repository.ResponsavelRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -16,167 +26,292 @@ public class AlunoService {
 
     @Autowired
     private AlunoRepository alunoRepository;
+    
+    @Autowired
+    private AlunoResponsavelRepository alunoResponsavelRepository;
+    
+    @Autowired
+    private ResponsavelRepository responsavelRepository;
 
     /**
-     * Salva um novo aluno
+     * Métodos auxiliares para conversão de DTOs
      */
-    public Aluno salvar(Aluno aluno) {
-        // Validações básicas
-        validarDadosAluno(aluno);
+    private List<AlunoDtoOut> toDtos(List<Aluno> alunos) {
+        return alunos.stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    private AlunoDtoOut toDTO(Aluno aluno) {
+        List<MatriculaDtoSimples> matriculasDTO = aluno.getMatriculas().stream()
+                .map(m -> new MatriculaDtoSimples(
+                ))
+                .collect(Collectors.toList());
+
+        List<ResponsavelDtoSimples> responsaveisDTO = aluno.getResponsaveis().stream()
+                .map(ar -> new ResponsavelDtoSimples(
+                    ar.getResponsavel().getId(),
+                    ar.getResponsavel().getNome(),
+                    ar.getResponsavel().getParentesco()   
+                ))
+                .collect(Collectors.toList());
+
+        return new AlunoDtoOut(
+                aluno.getId(),
+                aluno.getNome(),
+                aluno.getDataNascimento(),
+                aluno.getCpf(),
+                aluno.getEmail(),
+                aluno.getAtivo(),
+                aluno.getObservacoes(),
+                matriculasDTO,
+                responsaveisDTO
+        );
+    }
+
+    private Optional<AlunoDtoOut> toDTO(Optional<Aluno> aluno) {
+        return aluno.map(this::toDTO);
+    }
+
+    /**
+     * Salva um novo aluno no banco de dados
+     * @param alunoCreate Dados do aluno a ser criado
+     * @return DTO do aluno salvo
+     */
+    public AlunoDtoOut salvar(AlunoDtoIn alunoCreate) {
+        validarDadosAluno(alunoCreate);
         
-        // Verificar se CPF já existe
-        if (cpfJaExiste(aluno.getCpf())) {
-            throw new RuntimeException("CPF já cadastrado: " + aluno.getCpf());
+        if (cpfJaExiste(alunoCreate.getCpf())) {
+            throw new AlunoException("CPF já cadastrado no sistema");
         }
         
-        aluno.setAtivo(true);
-        return alunoRepository.save(aluno);
+        Aluno aluno = new Aluno();
+        aluno.setNome(alunoCreate.getNome());
+        aluno.setDataNascimento(alunoCreate.getDataNascimento());
+        aluno.setCpf(alunoCreate.getCpf());
+        aluno.setObservacoes(alunoCreate.getObservacoes());
+        aluno.setAtivo(alunoCreate.getAtivo());
+        
+        Aluno alunoSalvo = alunoRepository.save(aluno);
+        
+        // Se há responsáveis, criar as relações
+        if (alunoCreate.getResponsaveis() != null && !alunoCreate.getResponsaveis().isEmpty()) {
+            for (AlunoDtoIn.ResponsavelDTO responsavelDTO : alunoCreate.getResponsaveis()) {
+                criarRelacaoResponsavel(alunoSalvo, responsavelDTO);
+            }
+        }
+        
+        return toDTO(alunoSalvo);
+    }
+    
+    private void criarRelacaoResponsavel(Aluno aluno, AlunoDtoIn.ResponsavelDTO responsavelDTO) {
+        // Buscar ou criar responsável
+        Responsavel responsavel = responsavelRepository.findByCpf(responsavelDTO.getCpf())
+                .orElseGet(() -> {
+                    Responsavel novoResponsavel = new Responsavel();
+                    novoResponsavel.setNome(responsavelDTO.getNome());
+                    novoResponsavel.setTelefone(responsavelDTO.getTelefone());
+                    novoResponsavel.setCpf(responsavelDTO.getCpf());
+                    novoResponsavel.setParentesco(responsavelDTO.getParentesco());
+                    return responsavelRepository.save(novoResponsavel);
+                });
+        
+        // Verificar se já existe relação entre aluno e responsável
+        Optional<AlunoResponsavel> relacaoExistente = alunoResponsavelRepository
+                .findByAlunoIdAndResponsavelId(aluno.getId(), responsavel.getId());
+        
+        if (relacaoExistente.isPresent()) {
+            throw new AlunoException("Relacionamento já existe entre este aluno e responsável");
+        }
+        
+        // Criar relação aluno-responsável
+        AlunoResponsavel alunoResponsavel = new AlunoResponsavel();
+        alunoResponsavel.setAluno(aluno);
+        alunoResponsavel.setResponsavel(responsavel);
+        
+        // Definir se é principal baseado no DTO ou se é o primeiro responsável
+        Boolean isPrincipal = responsavelDTO.getPrincipal() != null ? responsavelDTO.getPrincipal() : false;
+        
+        // Se for marcado como principal, verificar se já existe um responsável principal
+        if (isPrincipal) {
+            List<AlunoResponsavel> responsaveisPrincipais = alunoResponsavelRepository
+                    .findByAlunoIdAndPrincipalTrue(aluno.getId());
+            
+            if (!responsaveisPrincipais.isEmpty()) {
+                throw new AlunoException("Aluno já possui um responsável principal");
+            }
+        }
+        
+        alunoResponsavel.setPrincipal(isPrincipal);
+        
+        // Salvar a relação no banco de dados
+        alunoResponsavelRepository.save(alunoResponsavel);
     }
 
     /**
      * Atualiza um aluno existente
+     * @param id ID do aluno a ser atualizado
+     * @param alunoCreate Dados atualizados do aluno
+     * @return DTO do aluno atualizado
      */
-    public Aluno atualizar(Aluno aluno) {
-        if (aluno.getId() == null) {
-            throw new IllegalArgumentException("ID do aluno não pode ser nulo para atualização");
+    public AlunoDtoOut atualizar(Long id, AlunoDtoIn alunoCreate) {
+        Aluno aluno = alunoRepository.findById(id)
+                .orElseThrow(() -> new AlunoException("Aluno não encontrado com ID: " + id));
+        
+        // Verificar se o CPF foi alterado e se já existe
+        if (!aluno.getCpf().equals(alunoCreate.getCpf()) && cpfJaExiste(alunoCreate.getCpf())) {
+            throw new AlunoException("CPF já cadastrado: " + alunoCreate.getCpf());
         }
         
-        Optional<Aluno> alunoExistente = alunoRepository.findById(aluno.getId());
-        if (alunoExistente.isEmpty()) {
-            throw new RuntimeException("Aluno não encontrado com ID: " + aluno.getId());
+        validarDadosAluno(alunoCreate);
+        
+        aluno.setNome(alunoCreate.getNome());
+        aluno.setDataNascimento(alunoCreate.getDataNascimento());
+        aluno.setCpf(alunoCreate.getCpf());
+        aluno.setObservacoes(alunoCreate.getObservacoes());
+        aluno.setAtivo(alunoCreate.getAtivo());
+        
+        Aluno alunoAtualizado = alunoRepository.save(aluno);
+        
+        // Se há responsáveis para atualizar, remover os existentes e criar novos
+        if (alunoCreate.getResponsaveis() != null) {
+            // Remover relações existentes
+            List<AlunoResponsavel> relacoesExistentes = alunoResponsavelRepository.findByAlunoId(aluno.getId());
+            alunoResponsavelRepository.deleteAll(relacoesExistentes);
+            
+            // Criar novas relações
+            for (AlunoDtoIn.ResponsavelDTO responsavelDTO : alunoCreate.getResponsaveis()) {
+                criarRelacaoResponsavel(alunoAtualizado, responsavelDTO);
+            }
         }
         
-        // Verificar se o novo CPF já existe (se foi alterado)
-        Aluno alunoAtual = alunoExistente.get();
-        if (!alunoAtual.getCpf().equals(aluno.getCpf()) && 
-            cpfJaExiste(aluno.getCpf())) {
-            throw new RuntimeException("CPF já cadastrado: " + aluno.getCpf());
-        }
-        
-        validarDadosAluno(aluno);
-        return alunoRepository.save(aluno);
+        return toDTO(alunoAtualizado);
     }
 
     /**
-     * Busca aluno por ID
+     * Busca um aluno por ID
+     * @param id ID do aluno
+     * @return DTO do aluno encontrado ou Optional vazio
      */
-    public Optional<Aluno> buscarPorId(Long id) {
-        return alunoRepository.findById(id);
+    public Optional<AlunoDtoOut> buscarPorId(Long id) {
+        return toDTO(alunoRepository.findById(id));
     }
 
     /**
-     * Busca aluno por CPF
+     * Busca um aluno por CPF
+     * @param cpf CPF do aluno
+     * @return DTO do aluno encontrado ou Optional vazio
      */
-    public Optional<Aluno> buscarPorCpf(String cpf) {
-        return alunoRepository.findByCpf(cpf);
+    public Optional<AlunoDtoOut> buscarPorCpf(String cpf) {
+        return toDTO(alunoRepository.findByCpf(cpf));
     }
 
     /**
      * Busca alunos por nome (busca parcial)
+     * @param nome Nome ou parte do nome
+     * @return Lista de DTOs dos alunos encontrados
      */
-    public List<Aluno> buscarPorNome(String nome) {
-        return alunoRepository.findByNomeContainingIgnoreCase(nome);
+    public List<AlunoDtoOut> buscarPorNome(String nome) {
+        return toDtos(alunoRepository.findByNomeContainingIgnoreCase(nome));
     }
 
     /**
      * Lista todos os alunos
+     * @return Lista de DTOs de todos os alunos
      */
-    public List<Aluno> listarTodos() {
-        return alunoRepository.findAll();
+    public List<AlunoDtoOut> listarTodos() {
+        return toDtos(alunoRepository.findAll());
     }
 
     /**
      * Lista apenas alunos ativos
+     * @return Lista de DTOs dos alunos ativos
      */
-    public List<Aluno> listarAtivos() {
-        return alunoRepository.findByAtivoTrue();
+    public List<AlunoDtoOut> listarAtivos() {
+        return toDtos(alunoRepository.findByAtivoTrue());
     }
 
     /**
      * Desativa um aluno (soft delete)
+     * @param id ID do aluno a ser desativado
+     * @return DTO do aluno desativado
      */
-    public void desativar(Long id) {
-        Optional<Aluno> aluno = alunoRepository.findById(id);
-        if (aluno.isPresent()) {
-            aluno.get().setAtivo(false);
-            alunoRepository.save(aluno.get());
-        } else {
-            throw new RuntimeException("Aluno não encontrado com ID: " + id);
-        }
+    public AlunoDtoOut desativar(Long id) {
+        Aluno aluno = alunoRepository.findById(id)
+                .orElseThrow(() -> new AlunoException("Aluno não encontrado com ID: " + id));
+        
+        aluno.setAtivo(false);
+        Aluno alunoDesativado = alunoRepository.save(aluno);
+        return toDTO(alunoDesativado);
     }
 
     /**
      * Ativa um aluno
+     * @param id ID do aluno a ser ativado
+     * @return DTO do aluno ativado
      */
-    public void ativar(Long id) {
-        Optional<Aluno> aluno = alunoRepository.findById(id);
-        if (aluno.isPresent()) {
-            aluno.get().setAtivo(true);
-            alunoRepository.save(aluno.get());
-        } else {
-            throw new RuntimeException("Aluno não encontrado com ID: " + id);
-        }
+    public AlunoDtoOut ativar(Long id) {
+        Aluno aluno = alunoRepository.findById(id)
+                .orElseThrow(() -> new AlunoException("Aluno não encontrado com ID: " + id));
+        
+        aluno.setAtivo(true);
+        Aluno alunoAtivado = alunoRepository.save(aluno);
+        return toDTO(alunoAtivado);
     }
 
     /**
-     * Remove permanentemente um aluno
+     * Deleta um aluno permanentemente
+     * @param id ID do aluno a ser deletado
      */
     public void deletar(Long id) {
         if (!alunoRepository.existsById(id)) {
-            throw new RuntimeException("Aluno não encontrado com ID: " + id);
+            throw new AlunoException("Aluno não encontrado com ID: " + id);
         }
         alunoRepository.deleteById(id);
     }
 
     /**
-     * Verifica se CPF já existe
+     * Verifica se um CPF já existe no banco de dados
+     * @param cpf CPF a ser verificado
+     * @return true se o CPF já existe, false caso contrário
      */
-    public boolean cpfJaExiste(String cpf) {
+    private boolean cpfJaExiste(String cpf) {
         return alunoRepository.findByCpf(cpf).isPresent();
     }
 
     /**
      * Validações dos dados do aluno
      */
-    private void validarDadosAluno(Aluno aluno) {
-        if (aluno.getNome() == null || aluno.getNome().trim().isEmpty()) {
+    private void validarDadosAluno(AlunoDtoIn alunoCreate) {
+        validarDadosAluno(alunoCreate.getNome(), alunoCreate.getCpf(), alunoCreate.getDataNascimento());
+    }
+
+    
+    private void validarDadosAluno(String nome, String cpf, LocalDate dataNascimento) {
+        if (nome == null || nome.trim().isEmpty()) {
             throw new IllegalArgumentException("Nome é obrigatório");
         }
         
-        if (aluno.getNome().length() < 2) {
+        if (nome.length() < 2) {
             throw new IllegalArgumentException("Nome deve ter pelo menos 2 caracteres");
         }
         
-        if (aluno.getCpf() == null || aluno.getCpf().trim().isEmpty()) {
+        if (cpf == null || cpf.trim().isEmpty()) {
             throw new IllegalArgumentException("CPF é obrigatório");
         }
         
-        if (!validarFormatoCpf(aluno.getCpf())) {
+        if (!validarFormatoCpf(cpf)) {
             throw new IllegalArgumentException("CPF deve ter formato válido (XXX.XXX.XXX-XX)");
         }
         
-        if (aluno.getDataNascimento() == null) {
+        if (dataNascimento == null) {
             throw new IllegalArgumentException("Data de nascimento é obrigatória");
         }
         
-        if (aluno.getDataNascimento().isAfter(LocalDate.now())) {
+        if (dataNascimento.isAfter(LocalDate.now())) {
             throw new IllegalArgumentException("Data de nascimento não pode ser futura");
         }
-        
-        // Verificar idade mínima (3 anos) e máxima (25 anos)
-        LocalDate hoje = LocalDate.now();
-        int idade = hoje.getYear() - aluno.getDataNascimento().getYear();
-        if (aluno.getDataNascimento().plusYears(idade).isAfter(hoje)) {
-            idade--;
-        }
-        
-        if (idade < 3) {
-            throw new IllegalArgumentException("Aluno deve ter pelo menos 3 anos");
-        }
-        
-        if (idade > 25) {
-            throw new IllegalArgumentException("Aluno não pode ter mais de 25 anos");
-        }
+
     }
 
     /**

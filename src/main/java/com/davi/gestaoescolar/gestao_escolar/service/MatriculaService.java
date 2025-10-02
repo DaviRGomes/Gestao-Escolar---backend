@@ -1,5 +1,10 @@
 package com.davi.gestaoescolar.gestao_escolar.service;
 
+import com.davi.gestaoescolar.gestao_escolar.dto.Aluno.AlunoDtoSimples;
+import com.davi.gestaoescolar.gestao_escolar.dto.Matricula.MatriculaDtoIn;
+import com.davi.gestaoescolar.gestao_escolar.dto.Matricula.MatriculaDtoOut;
+import com.davi.gestaoescolar.gestao_escolar.dto.Turma.TurmaDtoSimples;
+import com.davi.gestaoescolar.gestao_escolar.exception.MatriculaException;
 import com.davi.gestaoescolar.gestao_escolar.model.Aluno;
 import com.davi.gestaoescolar.gestao_escolar.model.Matricula;
 import com.davi.gestaoescolar.gestao_escolar.model.Turma;
@@ -14,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -31,28 +37,35 @@ public class MatriculaService {
     /**
      * Realiza uma nova matrícula
      */
-    public Matricula matricular(Matricula matricula) {
-        validarDadosMatricula(matricula);
-        validarAlunoETurma(matricula.getAluno(), matricula.getTurma());
-        verificarMatriculaDuplicada(matricula.getAluno().getId(), matricula.getTurma().getId());
+    public MatriculaDtoOut salvarMatricula(MatriculaDtoIn dto) {
+        validarDadosMatricula(dto);
+        validarAlunoETurma(dto.getAlunoId(), dto.getTurmaId());
+        verificarMatriculaDuplicada(dto.getAlunoId(), dto.getTurmaId());
         
         // Define a data de matrícula como hoje se não foi informada
-        if (matricula.getDataMatricula() == null) {
-            matricula.setDataMatricula(LocalDate.now());
+        if (dto.getDataMatricula() == null) {
+            dto.setDataMatricula(LocalDate.now());
         }
         
         // Define situação como ATIVA se não foi informada
-        if (matricula.getSituacao() == null) {
-            matricula.setSituacao(SituacaoMatricula.ATIVA);
+        if (dto.getSituacao() == null) {
+            dto.setSituacao(SituacaoMatricula.EM_PROCESSO);
         }
-        
-        return matriculaRepository.save(matricula);
+         
+        Matricula matricula = new Matricula(
+            dto.getDataMatricula(),
+            dto.getSituacao(),
+            alunoRepository.findById(dto.getAlunoId()).orElseThrow(() -> new MatriculaException("Aluno não encontrado")),
+            turmaRepository.findById(dto.getTurmaId()).orElseThrow(() -> new MatriculaException("Turma não encontrada"))
+        );
+
+        return toDTO(matriculaRepository.save(matricula));
     }
 
     /**
      * Atualiza uma matrícula existente
      */
-    public Matricula atualizar(Long id, Matricula matriculaAtualizada) {
+    public MatriculaDtoOut atualizarMatricula(Long id, MatriculaDtoIn matriculaAtualizada) {
         Optional<Matricula> matriculaExistente = matriculaRepository.findById(id);
         if (matriculaExistente.isEmpty()) {
             throw new RuntimeException("Matrícula não encontrada com ID: " + id);
@@ -68,105 +81,150 @@ public class MatriculaService {
         if (matricula.getSituacao() != SituacaoMatricula.DESATIVADO && 
             matricula.getSituacao() != SituacaoMatricula.DESATIVADO) {
             
-            if (!matricula.getAluno().getId().equals(matriculaAtualizada.getAluno().getId()) ||
-                !matricula.getTurma().getId().equals(matriculaAtualizada.getTurma().getId())) {
+            if (!matricula.getAluno().getId().equals(matriculaAtualizada.getAlunoId()) ||
+                !matricula.getTurma().getId().equals(matriculaAtualizada.getTurmaId())) {
                 
-                validarAlunoETurma(matriculaAtualizada.getAluno(), matriculaAtualizada.getTurma());
-                verificarMatriculaDuplicada(matriculaAtualizada.getAluno().getId(), 
-                                          matriculaAtualizada.getTurma().getId(), id);
+                validarAlunoETurma(matriculaAtualizada.getAlunoId(), matriculaAtualizada.getTurmaId());
+                verificarMatriculaDuplicada(matriculaAtualizada.getAlunoId(), 
+                                          matriculaAtualizada.getTurmaId(), id);
                 
-                matricula.setAluno(matriculaAtualizada.getAluno());
-                matricula.setTurma(matriculaAtualizada.getTurma());
+                matricula.setAluno(alunoRepository.findById(matriculaAtualizada.getAlunoId()).orElseThrow(() -> new MatriculaException("Aluno não encontrado")));
+                matricula.setTurma(turmaRepository.findById(matriculaAtualizada.getTurmaId()).orElseThrow(() -> new MatriculaException("Turma não encontrada")));
             }
         }
         
-        return matriculaRepository.save(matricula);
+        return toDTO(matriculaRepository.save(matricula));
     }
 
     /**
      * Busca matrícula por ID
      */
     @Transactional(readOnly = true)
-    public Optional<Matricula> buscarPorId(Long id) {
-        return matriculaRepository.findById(id);
+    public Optional<MatriculaDtoOut> buscarPorId(Long id) {
+        
+        Optional<Matricula> matricula = matriculaRepository.findById(id);
+        if (matricula.isEmpty()) {
+            throw new MatriculaException.MatriculaNaoEncontradaException("Matrícula não encontrada com ID: " + id);
+        }
+        return toDTO(matricula);
     }
 
     /**
      * Busca matrículas por aluno
      */
     @Transactional(readOnly = true)
-    public List<Matricula> buscarPorAluno(Long alunoId) {
+    public List<MatriculaDtoOut> buscarPorAluno(Long alunoId) {
         if (alunoId == null) {
             throw new IllegalArgumentException("ID do aluno não pode ser nulo");
         }
-        return matriculaRepository.findByAlunoId(alunoId);
+        List<Matricula> matriculas = matriculaRepository.findByAlunoId(alunoId);
+        if (matriculas.isEmpty()) {
+            throw new MatriculaException("Matrículas não encontradas para o aluno com ID: " + alunoId);
+        }
+        return matriculas.stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
      * Busca matrículas por turma
      */
     @Transactional(readOnly = true)
-    public List<Matricula> buscarPorTurma(Long turmaId) {
+    public List<MatriculaDtoOut> buscarPorTurma(Long turmaId) {
         if (turmaId == null) {
             throw new IllegalArgumentException("ID da turma não pode ser nulo");
         }
-        return matriculaRepository.findByTurmaId(turmaId);
+        List<Matricula> matriculas = matriculaRepository.findByTurmaId(turmaId);
+        if (matriculas.isEmpty()) {
+            throw new MatriculaException("Matrículas não encontradas para a turma com ID: " + turmaId);
+        }
+        return matriculas.stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
      * Busca matrículas por situação
      */
     @Transactional(readOnly = true)
-    public List<Matricula> buscarPorSituacao(SituacaoMatricula situacao) {
+    public List<MatriculaDtoOut> buscarPorSituacao(SituacaoMatricula situacao) {
         if (situacao == null) {
             throw new IllegalArgumentException("Situação não pode ser nula");
         }
-        return matriculaRepository.findBySituacao(situacao);
+        List<Matricula> matriculas = matriculaRepository.findBySituacao(situacao);
+        if (matriculas.isEmpty()) {
+            throw new MatriculaException("Matrículas não encontradas para a situação: " + situacao);
+        }
+        return matriculas.stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
      * Busca matrículas por data
      */
     @Transactional(readOnly = true)
-    public List<Matricula> buscarPorData(LocalDate data) {
+    public List<MatriculaDtoOut> buscarPorData(LocalDate data) {
         if (data == null) {
             throw new IllegalArgumentException("Data não pode ser nula");
         }
-        return matriculaRepository.findByDataMatricula(data);
+        List<Matricula> matriculas = matriculaRepository.findByDataMatricula(data);
+        if (matriculas.isEmpty()) {
+            throw new MatriculaException("Matrículas não encontradas para a data: " + data);
+        }
+        return matriculas.stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
      * Busca matrículas por período
      */
     @Transactional(readOnly = true)
-    public List<Matricula> buscarPorPeriodo(LocalDate dataInicio, LocalDate dataFim) {
+    public List<MatriculaDtoOut> buscarPorPeriodo(LocalDate dataInicio, LocalDate dataFim) {
         if (dataInicio == null || dataFim == null) {
             throw new IllegalArgumentException("Datas de início e fim não podem ser nulas");
         }
         if (dataInicio.isAfter(dataFim)) {
             throw new IllegalArgumentException("Data de início não pode ser posterior à data de fim");
         }
-        return matriculaRepository.findByDataMatriculaBetween(dataInicio, dataFim);
+        List<Matricula> matriculas = matriculaRepository.findByDataMatriculaBetween(dataInicio, dataFim);
+        if (matriculas.isEmpty()) {
+            throw new MatriculaException("Matrículas não encontradas para o período: " + dataInicio + " a " + dataFim);
+        }
+        return matriculas.stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
      * Busca matrículas ativas por turma
      */
     @Transactional(readOnly = true)
-    public List<Matricula> buscarAtivasPorTurma(Long turmaId) {
+    public List<MatriculaDtoOut> buscarAtivasPorTurma(Long turmaId) {
         if (turmaId == null) {
             throw new IllegalArgumentException("ID da turma não pode ser nulo");
         }
-        return matriculaRepository.findByTurmaIdAndSituacao(turmaId, SituacaoMatricula.ATIVA);
+        List<Matricula> matriculas = matriculaRepository.findByTurmaIdAndSituacao(turmaId, SituacaoMatricula.ATIVA);
+        if (matriculas.isEmpty()) {
+            throw new MatriculaException("Matrículas não encontradas para a turma com ID: " + turmaId);
+        }
+        return matriculas.stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
      * Lista todas as matrículas
      */
     @Transactional(readOnly = true)
-    public List<Matricula> listarTodas() {
-        return matriculaRepository.findAll();
+    public List<MatriculaDtoOut> listarTodas() {
+        List<Matricula> matriculas = matriculaRepository.findAll();
+        return matriculas.stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
+
 
     /**
      * Desativa uma matrícula
@@ -174,7 +232,7 @@ public class MatriculaService {
     public void desativar(Long id) {
         Optional<Matricula> matricula = matriculaRepository.findById(id);
         if (matricula.isEmpty()) {
-            throw new RuntimeException("Matrícula não encontrada com ID: " + id);
+            throw new MatriculaException.MatriculaNaoEncontradaException("Matrícula não encontrada com ID: " + id);
         }
         
         Matricula matriculaEntity = matricula.get();
@@ -192,7 +250,7 @@ public class MatriculaService {
     public void colocarEmProcesso(Long id) {
         Optional<Matricula> matricula = matriculaRepository.findById(id);
         if (matricula.isEmpty()) {
-            throw new RuntimeException("Matrícula não encontrada com ID: " + id);
+            throw new MatriculaException.MatriculaNaoEncontradaException("Matrícula não encontrada com ID: " + id);
         }
         
         Matricula matriculaEntity = matricula.get();
@@ -210,7 +268,7 @@ public class MatriculaService {
     public void ativar(Long id) {
         Optional<Matricula> matricula = matriculaRepository.findById(id);
         if (matricula.isEmpty()) {
-            throw new RuntimeException("Matrícula não encontrada com ID: " + id);
+            throw new MatriculaException.MatriculaNaoEncontradaException("Matrícula não encontrada com ID: " + id);
         }
         
         Matricula matriculaEntity = matricula.get();
@@ -243,11 +301,11 @@ public class MatriculaService {
     /**
      * Transfere um aluno para outra turma
      */
-    public Matricula transferirTurma(Long matriculaId, Long novaTurmaId) {
+    public MatriculaDtoOut transferirTurma(Long matriculaId, Long novaTurmaId) {
         // Buscar a matrícula existente
         Optional<Matricula> matriculaOpt = matriculaRepository.findById(matriculaId);
         if (matriculaOpt.isEmpty()) {
-            throw new RuntimeException("Matrícula não encontrada com ID: " + matriculaId);
+            throw new MatriculaException.MatriculaNaoEncontradaException("Matrícula não encontrada com ID: " + matriculaId);
         }
         
         Matricula matricula = matriculaOpt.get();
@@ -276,7 +334,7 @@ public class MatriculaService {
         // Atualizar a turma da matrícula
         matricula.setTurma(novaTurma);
         
-        return matriculaRepository.save(matricula);
+        return toDTO(matriculaRepository.save(matricula));
     }
 
     /**
@@ -292,7 +350,7 @@ public class MatriculaService {
     /**
      * Valida os dados da matrícula
      */
-    private void validarDadosMatricula(Matricula matricula) {
+    private void validarDadosMatricula(MatriculaDtoIn matricula) {
         if (matricula == null) {
             throw new IllegalArgumentException("Matrícula não pode ser nula");
         }
@@ -301,11 +359,11 @@ public class MatriculaService {
             throw new IllegalArgumentException("Data de matrícula não pode ser futura");
         }
         
-        if (matricula.getAluno() == null || matricula.getAluno().getId() == null) {
+        if (matricula.getAlunoId() == null) {
             throw new IllegalArgumentException("Aluno é obrigatório");
         }
         
-        if (matricula.getTurma() == null || matricula.getTurma().getId() == null) {
+        if (matricula.getTurmaId() == null) {
             throw new IllegalArgumentException("Turma é obrigatória");
         }
     }
@@ -313,19 +371,19 @@ public class MatriculaService {
     /**
      * Valida se aluno e turma existem e estão ativos
      */
-    private void validarAlunoETurma(Aluno aluno, Turma turma) {
-        Optional<Aluno> alunoExistente = alunoRepository.findById(aluno.getId());
+    private void validarAlunoETurma(Long alunoId, Long turmaId) {
+        Optional<Aluno> alunoExistente = alunoRepository.findById(alunoId);
         if (alunoExistente.isEmpty()) {
-            throw new RuntimeException("Aluno não encontrado com ID: " + aluno.getId());
+            throw new RuntimeException("Aluno não encontrado com ID: " + alunoId);
         }
         
         if (!alunoExistente.get().getAtivo()) {
             throw new RuntimeException("Não é possível matricular um aluno inativo");
         }
         
-        Optional<Turma> turmaExistente = turmaRepository.findById(turma.getId());
+        Optional<Turma> turmaExistente = turmaRepository.findById(turmaId);
         if (turmaExistente.isEmpty()) {
-            throw new RuntimeException("Turma não encontrada com ID: " + turma.getId());
+            throw new RuntimeException("Turma não encontrada com ID: " + turmaId);
         }
         
         if (!turmaExistente.get().getAtivo()) {
@@ -353,5 +411,36 @@ public class MatriculaService {
                 throw new RuntimeException("Aluno já possui matrícula ativa nesta turma");
             }
         }
+    }
+
+    /**
+     * Método privado para converter Matricula para MatriculaDtoOut
+     */
+    private MatriculaDtoOut toDTO(Matricula matricula) {
+        AlunoDtoSimples alunoDto = new AlunoDtoSimples(
+                matricula.getAluno().getId(),
+                matricula.getAluno().getNome()
+                );
+
+        TurmaDtoSimples turmaDto = new TurmaDtoSimples(
+                matricula.getTurma().getId(),
+                matricula.getTurma().getNome()
+        );
+
+        return new MatriculaDtoOut(
+                matricula.getId(),
+                matricula.getDataMatricula(),
+                matricula.getSituacao(),
+                alunoDto,
+                turmaDto
+        );
+    }
+
+    private Optional<MatriculaDtoOut> toDTO(Optional<Matricula> matricula) {
+        return matricula.map(this::toDTO);
+    }
+
+    private List<MatriculaDtoOut> toDTO(List<Matricula> matriculas) {
+        return matriculas.stream().map(this::toDTO).collect(Collectors.toList());
     }
 }

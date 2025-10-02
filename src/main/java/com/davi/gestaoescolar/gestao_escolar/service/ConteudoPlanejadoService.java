@@ -1,14 +1,20 @@
 package com.davi.gestaoescolar.gestao_escolar.service;
 
+import com.davi.gestaoescolar.gestao_escolar.dto.ConteudoPlanejado.ConteudoPlanejadoDtoIn;
+import com.davi.gestaoescolar.gestao_escolar.dto.ConteudoPlanejado.ConteudoPlanejadoDtoOut;
+import com.davi.gestaoescolar.gestao_escolar.dto.Planejamento.PlanejamentoDtoOut;
+import com.davi.gestaoescolar.gestao_escolar.exception.ConteudoPlanejadoException;
 import com.davi.gestaoescolar.gestao_escolar.model.ConteudoPlanejado;
 import com.davi.gestaoescolar.gestao_escolar.model.Planejamento;
 import com.davi.gestaoescolar.gestao_escolar.repository.ConteudoPlanejadoRepository;
 import com.davi.gestaoescolar.gestao_escolar.repository.PlanejamentoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Service para gerenciar operações relacionadas aos Conteúdos Planejados
@@ -17,6 +23,7 @@ import java.util.Optional;
  * @version 1.0
  */
 @Service
+@Transactional
 public class ConteudoPlanejadoService {
 
     @Autowired
@@ -26,110 +33,159 @@ public class ConteudoPlanejadoService {
     private PlanejamentoRepository planejamentoRepository;
 
     /**
+     * Métodos auxiliares para conversão de DTOs
+     */
+    private List<ConteudoPlanejadoDtoOut> toDtos(List<ConteudoPlanejado> conteudos) {
+        return conteudos.stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    private ConteudoPlanejadoDtoOut toDTO(ConteudoPlanejado conteudo) {
+        if (conteudo == null) {
+            return null;
+        }
+
+        PlanejamentoDtoOut planejamentoDto = null;
+        if (conteudo.getPlanejamento() != null) {
+            Planejamento p = conteudo.getPlanejamento();
+            planejamentoDto = new PlanejamentoDtoOut(
+                p.getId(),
+                p.getDescricao(),
+                p.getSemestre(),
+                p.getAno(),
+                new PlanejamentoDtoOut.DisciplinaDTO(p.getDisciplina().getId(), p.getDisciplina().getNome()),
+                new PlanejamentoDtoOut.TurmaDTO(p.getTurma().getId(), p.getDisciplina().getNome()),
+                p.getDataCriacao(),
+                p.getDataAtualizacao()
+            );
+        }
+
+        return new ConteudoPlanejadoDtoOut(
+            conteudo.getId(),
+            conteudo.getConteudo(),
+            conteudo.getDataPrevista(),
+            conteudo.getDataConclusao(),
+            conteudo.getConcluido(),
+            conteudo.getObservacoes(),
+            conteudo.getOrdemApresentacao(),
+            planejamentoDto
+        );
+    }
+
+    /**
      * Salvar um novo conteúdo planejado
      * 
-     * @param conteudoPlanejado Conteúdo planejado a ser salvo
-     * @return Conteúdo planejado salvo
-     * @throws IllegalArgumentException se os dados forem inválidos
-     * @throws RuntimeException se o planejamento não existir
+     * @param dto Dados do conteúdo planejado a ser salvo
+     * @return ConteudoPlanejadoDtoOut com os dados salvos
+     * @throws ConteudoPlanejadoException.DadosInvalidosException se os dados forem inválidos
+     * @throws ConteudoPlanejadoException.PlanejamentoInvalidoException se o planejamento não existir
      */
-    public ConteudoPlanejado salvar(ConteudoPlanejado conteudoPlanejado) {
-        validarConteudoPlanejado(conteudoPlanejado);
+    public ConteudoPlanejadoDtoOut salvar(ConteudoPlanejadoDtoIn dto) {
+        validarDadosConteudoPlanejado(dto);
         
-        // Verificar se o planejamento existe
-        if (conteudoPlanejado.getPlanejamento() != null && conteudoPlanejado.getPlanejamento().getId() != null) {
-            Optional<Planejamento> planejamento = planejamentoRepository.findById(conteudoPlanejado.getPlanejamento().getId());
-            if (!planejamento.isPresent()) {
-                throw new RuntimeException("Planejamento não encontrado com ID: " + conteudoPlanejado.getPlanejamento().getId());
-            }
-            conteudoPlanejado.setPlanejamento(planejamento.get());
-        }
+        Planejamento planejamento = buscarPlanejamento(dto.getPlanejamentoId());
         
-        return conteudoPlanejadoRepository.save(conteudoPlanejado);
+        ConteudoPlanejado conteudo = new ConteudoPlanejado();
+        conteudo.setConteudo(dto.getConteudo());
+        conteudo.setDataPrevista(dto.getDataPrevista());
+        conteudo.setDataConclusao(dto.getDataConclusao());
+        conteudo.setConcluido(dto.getConcluido() != null ? dto.getConcluido() : false);
+        conteudo.setObservacoes(dto.getObservacoes());
+        conteudo.setOrdemApresentacao(dto.getOrdemApresentacao());
+        conteudo.setPlanejamento(planejamento);
+        
+        ConteudoPlanejado conteudoSalvo = conteudoPlanejadoRepository.save(conteudo);
+        return toDTO(conteudoSalvo);
     }
 
     /**
      * Atualizar um conteúdo planejado existente
      * 
      * @param id ID do conteúdo planejado
-     * @param conteudoPlanejado Novos dados do conteúdo planejado
-     * @return Conteúdo planejado atualizado
-     * @throws RuntimeException se o conteúdo planejado não for encontrado
+     * @param dto Novos dados do conteúdo planejado
+     * @return ConteudoPlanejadoDtoOut com os dados atualizados
+     * @throws ConteudoPlanejadoException.ConteudoPlanejadoNaoEncontradoException se o conteúdo não for encontrado
+     * @throws ConteudoPlanejadoException.DadosInvalidosException se os dados forem inválidos
+     * @throws ConteudoPlanejadoException.PlanejamentoInvalidoException se o planejamento não existir
      */
-    public ConteudoPlanejado atualizar(Long id, ConteudoPlanejado conteudoPlanejado) {
-        Optional<ConteudoPlanejado> conteudoExistente = conteudoPlanejadoRepository.findById(id);
-        if (!conteudoExistente.isPresent()) {
-            throw new RuntimeException("Conteúdo planejado não encontrado com ID: " + id);
-        }
+    public ConteudoPlanejadoDtoOut atualizar(Long id, ConteudoPlanejadoDtoIn dto) {
+        ConteudoPlanejado conteudoExistente = conteudoPlanejadoRepository.findById(id)
+                .orElseThrow(() -> new ConteudoPlanejadoException.ConteudoPlanejadoNaoEncontradoException(id));
         
-        validarConteudoPlanejado(conteudoPlanejado);
+        validarDadosConteudoPlanejado(dto);
         
-        ConteudoPlanejado conteudoAtualizado = conteudoExistente.get();
-        conteudoAtualizado.setConteudo(conteudoPlanejado.getConteudo());
-        conteudoAtualizado.setDataPrevista(conteudoPlanejado.getDataPrevista());
-        conteudoAtualizado.setDataConclusao(conteudoPlanejado.getDataConclusao());
-        conteudoAtualizado.setConcluido(conteudoPlanejado.getConcluido());
-        conteudoAtualizado.setObservacoes(conteudoPlanejado.getObservacoes());
-        conteudoAtualizado.setOrdemApresentacao(conteudoPlanejado.getOrdemApresentacao());
+        Planejamento planejamento = buscarPlanejamento(dto.getPlanejamentoId());
         
-        // Atualizar planejamento se fornecido
-        if (conteudoPlanejado.getPlanejamento() != null && conteudoPlanejado.getPlanejamento().getId() != null) {
-            Optional<Planejamento> planejamento = planejamentoRepository.findById(conteudoPlanejado.getPlanejamento().getId());
-            if (!planejamento.isPresent()) {
-                throw new RuntimeException("Planejamento não encontrado com ID: " + conteudoPlanejado.getPlanejamento().getId());
-            }
-            conteudoAtualizado.setPlanejamento(planejamento.get());
-        }
+        conteudoExistente.setConteudo(dto.getConteudo());
+        conteudoExistente.setDataPrevista(dto.getDataPrevista());
+        conteudoExistente.setDataConclusao(dto.getDataConclusao());
+        conteudoExistente.setConcluido(dto.getConcluido() != null ? dto.getConcluido() : false);
+        conteudoExistente.setObservacoes(dto.getObservacoes());
+        conteudoExistente.setOrdemApresentacao(dto.getOrdemApresentacao());
+        conteudoExistente.setPlanejamento(planejamento);
         
-        return conteudoPlanejadoRepository.save(conteudoAtualizado);
+        ConteudoPlanejado conteudoAtualizado = conteudoPlanejadoRepository.save(conteudoExistente);
+        return toDTO(conteudoAtualizado);
     }
 
     /**
      * Buscar conteúdo planejado por ID
      * 
      * @param id ID do conteúdo planejado
-     * @return Optional com o conteúdo planejado encontrado
+     * @return ConteudoPlanejadoDtoOut com os dados encontrados
+     * @throws ConteudoPlanejadoException.ConteudoPlanejadoNaoEncontradoException se não encontrado
+     * @throws ConteudoPlanejadoException.DadosInvalidosException se ID for nulo
      */
-    public Optional<ConteudoPlanejado> buscarPorId(Long id) {
+    public ConteudoPlanejadoDtoOut buscarPorId(Long id) {
         if (id == null) {
-            throw new IllegalArgumentException("ID não pode ser nulo");
+            throw new ConteudoPlanejadoException.DadosInvalidosException("ID não pode ser nulo");
         }
-        return conteudoPlanejadoRepository.findById(id);
+        
+        ConteudoPlanejado conteudo = conteudoPlanejadoRepository.findById(id)
+                .orElseThrow(() -> new ConteudoPlanejadoException.ConteudoPlanejadoNaoEncontradoException(id));
+        
+        return toDTO(conteudo);
     }
 
     /**
      * Listar todos os conteúdos planejados
      * 
-     * @return Lista de conteúdos planejados
+     * @return Lista de ConteudoPlanejadoDtoOut
      */
-    public List<ConteudoPlanejado> listarTodos() {
-        return conteudoPlanejadoRepository.findAll();
+    public List<ConteudoPlanejadoDtoOut> listarTodos() {
+        List<ConteudoPlanejado> conteudos = conteudoPlanejadoRepository.findAll();
+        return toDtos(conteudos);
     }
 
     /**
      * Buscar conteúdos planejados por planejamento
      * 
      * @param planejamentoId ID do planejamento
-     * @return Lista de conteúdos planejados
+     * @return Lista de ConteudoPlanejadoDtoOut
+     * @throws ConteudoPlanejadoException.DadosInvalidosException se ID for nulo
      */
-    public List<ConteudoPlanejado> buscarPorPlanejamento(Long planejamentoId) {
+    public List<ConteudoPlanejadoDtoOut> buscarPorPlanejamento(Long planejamentoId) {
         if (planejamentoId == null) {
-            throw new IllegalArgumentException("ID do planejamento não pode ser nulo");
+            throw new ConteudoPlanejadoException.DadosInvalidosException("ID do planejamento não pode ser nulo");
         }
-        return conteudoPlanejadoRepository.findByPlanejamentoId(planejamentoId);
+        List<ConteudoPlanejado> conteudos = conteudoPlanejadoRepository.findByPlanejamentoId(planejamentoId);
+        return toDtos(conteudos);
     }
 
     /**
      * Buscar conteúdos planejados por data prevista
      * 
      * @param dataPrevista Data prevista
-     * @return Lista de conteúdos planejados
+     * @return Lista de ConteudoPlanejadoDtoOut
+     * @throws ConteudoPlanejadoException.DadosInvalidosException se data for nula
      */
-    public List<ConteudoPlanejado> buscarPorData(java.time.LocalDate dataPrevista) {
+    public List<ConteudoPlanejadoDtoOut> buscarPorData(LocalDate dataPrevista) {
         if (dataPrevista == null) {
-            throw new IllegalArgumentException("Data prevista não pode ser nula");
+            throw new ConteudoPlanejadoException.DadosInvalidosException("Data prevista não pode ser nula");
         }
-        return conteudoPlanejadoRepository.findByDataPrevista(dataPrevista);
+        List<ConteudoPlanejado> conteudos = conteudoPlanejadoRepository.findByDataPrevista(dataPrevista);
+        return toDtos(conteudos);
     }
 
     // /**
@@ -146,19 +202,19 @@ public class ConteudoPlanejadoService {
     // }
 
     /**
-     * Deletar um conteúdo planejado
+     * Deletar conteúdo planejado
      * 
-     * @param id ID do conteúdo planejado a ser deletado
-     * @throws RuntimeException se o conteúdo planejado não for encontrado
+     * @param id ID do conteúdo planejado
+     * @throws ConteudoPlanejadoException.DadosInvalidosException se ID for nulo
+     * @throws ConteudoPlanejadoException.ConteudoPlanejadoNaoEncontradoException se não encontrado
      */
     public void deletar(Long id) {
         if (id == null) {
-            throw new IllegalArgumentException("ID não pode ser nulo");
+            throw new ConteudoPlanejadoException.DadosInvalidosException("ID não pode ser nulo");
         }
         
-        Optional<ConteudoPlanejado> conteudo = conteudoPlanejadoRepository.findById(id);
-        if (!conteudo.isPresent()) {
-            throw new RuntimeException("Conteúdo planejado não encontrado com ID: " + id);
+        if (!conteudoPlanejadoRepository.existsById(id)) {
+            throw new ConteudoPlanejadoException.ConteudoPlanejadoNaoEncontradoException(id);
         }
         
         conteudoPlanejadoRepository.deleteById(id);
@@ -167,20 +223,48 @@ public class ConteudoPlanejadoService {
     /**
      * Validar dados do conteúdo planejado
      * 
-     * @param conteudoPlanejado Conteúdo planejado a ser validado
-     * @throws IllegalArgumentException se os dados forem inválidos
+     * @param dto ConteudoPlanejadoDtoIn a ser validado
+     * @throws ConteudoPlanejadoException.DadosInvalidosException se dados inválidos
      */
-    private void validarConteudoPlanejado(ConteudoPlanejado conteudoPlanejado) {
-        if (conteudoPlanejado == null) {
-            throw new IllegalArgumentException("Conteúdo planejado não pode ser nulo");
+    private void validarDadosConteudoPlanejado(ConteudoPlanejadoDtoIn dto) {
+        if (dto == null) {
+            throw new ConteudoPlanejadoException.DadosInvalidosException("Dados do conteúdo planejado não podem ser nulos");
         }
         
-        if (conteudoPlanejado.getConteudo() == null || conteudoPlanejado.getConteudo().trim().isEmpty()) {
-            throw new IllegalArgumentException("Conteúdo é obrigatório");
+        if (dto.getConteudo() == null || dto.getConteudo().trim().isEmpty()) {
+            throw new ConteudoPlanejadoException.DadosInvalidosException("Conteúdo não pode ser vazio");
         }
         
-        if (conteudoPlanejado.getPlanejamento() == null) {
-            throw new IllegalArgumentException("Planejamento é obrigatório");
+        if (dto.getDataPrevista() == null) {
+            throw new ConteudoPlanejadoException.DadosInvalidosException("Data prevista não pode ser nula");
         }
+        
+        if (dto.getPlanejamentoId() == null) {
+            throw new ConteudoPlanejadoException.DadosInvalidosException("ID do planejamento não pode ser nulo");
+        }
+        
+        // Validar se data de conclusão não é anterior à data prevista
+        if (dto.getDataConclusao() != null && dto.getDataPrevista() != null) {
+            if (dto.getDataConclusao().isBefore(dto.getDataPrevista())) {
+                throw new ConteudoPlanejadoException.DadosInvalidosException("Data de conclusão não pode ser anterior à data prevista");
+            }
+        }
+        
+        // Validar ordem de apresentação
+        if (dto.getOrdemApresentacao() != null && dto.getOrdemApresentacao() <= 0) {
+            throw new ConteudoPlanejadoException.DadosInvalidosException("Ordem de apresentação deve ser maior que zero");
+        }
+    }
+    
+    /**
+     * Buscar planejamento por ID
+     * 
+     * @param planejamentoId ID do planejamento
+     * @return Planejamento encontrado
+     * @throws ConteudoPlanejadoException.PlanejamentoInvalidoException se não encontrado
+     */
+    private Planejamento buscarPlanejamento(Long planejamentoId) {
+        return planejamentoRepository.findById(planejamentoId)
+                .orElseThrow(() -> new ConteudoPlanejadoException.PlanejamentoInvalidoException(planejamentoId));
     }
 }

@@ -1,9 +1,9 @@
 package com.davi.gestaoescolar.gestao_escolar.controller;
 
-import com.davi.gestaoescolar.gestao_escolar.model.Aluno;
+import com.davi.gestaoescolar.gestao_escolar.dto.Aluno.AlunoDtoIn;
+import com.davi.gestaoescolar.gestao_escolar.dto.Aluno.AlunoDtoOut;
 import com.davi.gestaoescolar.gestao_escolar.service.AlunoService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,63 +12,50 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/alunos")
-@CrossOrigin(origins = "*")
 public class AlunoController {
 
     @Autowired
     private AlunoService alunoService;
 
-    /**
+    /**dasdasda
      * Criar novo aluno
      */
     @PostMapping
-    public ResponseEntity<Aluno> criarAluno(@RequestBody Aluno aluno) {
-        try {
-            Aluno novoAluno = alunoService.salvar(aluno);
-            return new ResponseEntity<>(novoAluno, HttpStatus.CREATED);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        }
+    public ResponseEntity<AlunoDtoOut> criarAluno(@RequestBody AlunoDtoIn alunoCreate) {
+
+        this.alunoService.salvar(alunoCreate);
+        return  ResponseEntity.ok().build();
     }
 
     /**
      * Buscar aluno por ID
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Aluno> buscarPorId(@PathVariable Long id) {
-        try {
-            Optional<Aluno> aluno = alunoService.buscarPorId(id);
-            return aluno.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                    .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<Optional<AlunoDtoOut>> buscarPorId(@PathVariable Long id) {
+
+        Optional<AlunoDtoOut> aluno = alunoService.buscarPorId(id);
+        return  ResponseEntity.ok(aluno);
     }
 
     /**
      * Listar todos os alunos
      */
     @GetMapping
-    public ResponseEntity<List<Aluno>> listarTodos() {
-        try {
-            List<Aluno> alunos = alunoService.listarTodos();
-            return new ResponseEntity<>(alunos, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<List<AlunoDtoOut>> listarTodos() {
+
+        this.alunoService.listarTodos();
+        return  ResponseEntity.ok().build();
+
     }
 
     /**
      * Atualizar aluno
      */
     @PutMapping("/{id}")
-    public ResponseEntity<Aluno> atualizarAluno(@PathVariable Long id, @RequestBody Aluno aluno) {
-        try {
-            Aluno alunoAtualizado = alunoService.atualizar(aluno);
-            return new ResponseEntity<>(alunoAtualizado, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        }
+    public ResponseEntity<AlunoDtoOut> atualizarAluno(@PathVariable Long id, @RequestBody AlunoDtoIn alunoCreate) {
+
+        this.alunoService.atualizar(id, alunoCreate);
+        return  ResponseEntity.ok().build();
     }
 
     /**
@@ -76,77 +63,58 @@ public class AlunoController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletarAluno(@PathVariable Long id) {
-        try {
-            alunoService.deletar(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
+
+        this.alunoService.deletar(id);
+        return  ResponseEntity.ok().build();
     }
 
     /**
      * Buscar alunos ativos
      */
     @GetMapping("/ativos")
-    public ResponseEntity<List<Aluno>> listarAtivos() {
-        try {
-            List<Aluno> alunos = alunoService.listarAtivos();
-            return new ResponseEntity<>(alunos, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<List<AlunoDtoOut>> listarAtivos() {
+
+        this.alunoService.listarAtivos();
+        return  ResponseEntity.ok().build();
     }
 
     /**
      * Buscar aluno por CPF
      */
     @GetMapping("/cpf/{cpf}")
-    public ResponseEntity<Aluno> buscarPorCpf(@PathVariable String cpf) {
-        try {
-            Optional<Aluno> aluno = alunoService.buscarPorCpf(cpf);
-            return aluno.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                    .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<AlunoDtoOut> buscarPorCpf(@PathVariable String cpf) {
+
+        this.alunoService.buscarPorCpf(cpf);
+        return  ResponseEntity.ok().build();
     }
 
     /**
      * Buscar alunos por nome
      */
     @GetMapping("/nome/{nome}")
-    public ResponseEntity<List<Aluno>> buscarPorNome(@PathVariable String nome) {
-        try {
-            List<Aluno> alunos = alunoService.buscarPorNome(nome);
-            return new ResponseEntity<>(alunos, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<List<AlunoDtoOut>> buscarPorNome(@PathVariable String nome) {
+
+        this.alunoService.buscarPorNome(nome);
+        return  ResponseEntity.ok().build();
     }
 
     /**
      * Ativar aluno
      */
     @PatchMapping("/{id}/ativar")
-    public ResponseEntity<Void> ativarAluno(@PathVariable Long id) {
-        try {
-            alunoService.ativar(id);
-            return new ResponseEntity<>(HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
+    public ResponseEntity<AlunoDtoOut> ativarAluno(@PathVariable Long id) {
+
+        this.alunoService.ativar(id);
+        return  ResponseEntity.ok().build();
     }
 
     /**
      * Desativar aluno
      */
     @PatchMapping("/{id}/desativar")
-    public ResponseEntity<Void> desativarAluno(@PathVariable Long id) {
-        try {
-            alunoService.desativar(id);
-            return new ResponseEntity<>(HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
+    public ResponseEntity<AlunoDtoOut> desativarAluno(@PathVariable Long id) {
+
+        this.alunoService.desativar(id);
+        return  ResponseEntity.ok().build();
     }
 }

@@ -389,20 +389,4 @@ public class SecretariaService {
         }
     }
 
-    // ==================== MÉTODOS UTILITÁRIOS ====================
-
-    /**
-     * Criar secretaria básica
-     */
-    public Secretaria criarSecretariaBasica(String nome, String email, String senha) {
-        Secretaria secretaria = new Secretaria();
-        secretaria.setNome(nome);
-        secretaria.setEmail(email.toLowerCase());
-        secretaria.setSenha(senha);
-        secretaria.setPerfil(Perfil.SECRETARIA);
-        secretaria.setDataContratacao(LocalDate.now());
-        secretaria.setAtivo(true);
-        
-        return salvar(secretaria);
-    }
 }
