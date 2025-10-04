@@ -8,7 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -65,10 +65,15 @@ public class UsuarioController {
     }
 
     /**
-     * Listar todos os usuários
+     * Listar todos os usuários (com filtro opcional por email)
      */
     @GetMapping
-    public ResponseEntity<?> listarTodosUsuarios() {
+    public ResponseEntity<?> listarTodosUsuarios(@RequestParam(required = false) String email) {
+        if (email != null && !email.trim().isEmpty()) {
+            Optional<Usuario> usuario = usuarioService.buscarPorEmail(email.trim());
+            List<Usuario> resultado = usuario.map(Collections::singletonList).orElseGet(Collections::emptyList);
+            return ResponseEntity.ok(resultado);
+        }
         List<Usuario> usuarios = usuarioService.listarTodos();
         return ResponseEntity.ok(usuarios);
     }

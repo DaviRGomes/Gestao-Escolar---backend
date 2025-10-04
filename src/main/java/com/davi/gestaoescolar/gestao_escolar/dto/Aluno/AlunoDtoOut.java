@@ -21,7 +21,7 @@ public class AlunoDtoOut {
     private String cpf;
     private String observacoes;
     private Boolean ativo;
-    private String email;
+    // Removido: private String email;
     private List<MatriculaDtoSimples> matriculas;
     private List<ResponsavelDtoSimples> responsaveis;
 

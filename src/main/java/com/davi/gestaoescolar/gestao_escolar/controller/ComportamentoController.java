@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/comportamentos")
@@ -26,8 +27,8 @@ public class ComportamentoController {
     @PostMapping
     public ResponseEntity<ComportamentoDtoOut> criarComportamento(@RequestBody ComportamentoDtoIn comportamentoDto) {
 
-        this.comportamentoService.salvar(comportamentoDto);
-        return ResponseEntity.ok().build();
+        ComportamentoDtoOut comportamento = comportamentoService.salvar(comportamentoDto);
+        return ResponseEntity.ok(comportamento);
     }
 
     /**
@@ -38,18 +39,18 @@ public class ComportamentoController {
             @PathVariable Long id, 
             @RequestBody ComportamentoDtoIn comportamentoDto) {
 
-        this.comportamentoService.atualizar(id, comportamentoDto);
-        return ResponseEntity.ok().build();
+        ComportamentoDtoOut comportamento = comportamentoService.atualizar(id, comportamentoDto);
+        return ResponseEntity.ok(comportamento);
     }
 
     /**
      * Busca comportamento por ID
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ComportamentoDtoOut> buscarPorId(@PathVariable Long id) {
+    public ResponseEntity<Optional<ComportamentoDtoOut>> buscarPorId(@PathVariable Long id) {
 
-        this.comportamentoService.buscarPorId(id);
-        return ResponseEntity.ok().build();
+        Optional<ComportamentoDtoOut> comportamento = comportamentoService.buscarPorId(id);
+        return ResponseEntity.ok(comportamento);
     }
 
     /**
@@ -58,8 +59,8 @@ public class ComportamentoController {
     @GetMapping
     public ResponseEntity<List<ComportamentoDtoOut>> listarTodos() {
 
-        this.comportamentoService.listarTodos();
-        return ResponseEntity.ok().build();
+        List<ComportamentoDtoOut> comportamento = comportamentoService.listarTodos();
+        return ResponseEntity.ok(comportamento);
     }
 
     /**
@@ -69,8 +70,8 @@ public class ComportamentoController {
     public ResponseEntity<List<ComportamentoDtoOut>> buscarPorData(
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data) {
 
-        this.comportamentoService.buscarPorData(data);
-        return ResponseEntity.ok().build();
+        List<ComportamentoDtoOut> comportamento = comportamentoService.buscarPorData(data);
+        return ResponseEntity.ok(comportamento);
     }
 
     /**
@@ -81,8 +82,8 @@ public class ComportamentoController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim) {
 
-        this.comportamentoService.buscarPorPeriodo(dataInicio,dataFim);
-        return ResponseEntity.ok().build();
+        List<ComportamentoDtoOut> comportamento = comportamentoService.buscarPorPeriodo(dataInicio,dataFim);
+        return ResponseEntity.ok(comportamento);
     }
 
     /**
@@ -91,8 +92,8 @@ public class ComportamentoController {
     @GetMapping("/tipo/{tipo}")
     public ResponseEntity<List<ComportamentoDtoOut>> buscarPorTipo(@PathVariable TipoComportamento tipo) {
 
-        this.comportamentoService.buscarPorTipo(tipo);
-        return ResponseEntity.ok().build();
+        List<ComportamentoDtoOut> comportamento = comportamentoService.buscarPorTipo(tipo);
+        return ResponseEntity.ok(comportamento);
     }
 
     /**
@@ -101,8 +102,8 @@ public class ComportamentoController {
     @GetMapping("/nivel/{nivel}")
     public ResponseEntity<List<ComportamentoDtoOut>> buscarPorNivel(@PathVariable Gravidade nivel) {
 
-        this.comportamentoService.buscarPorNivel(nivel);
-        return ResponseEntity.ok().build();
+        List<ComportamentoDtoOut> comportamento = comportamentoService.buscarPorNivel(nivel);
+        return ResponseEntity.ok(comportamento);
     }
 
     /**
@@ -111,8 +112,8 @@ public class ComportamentoController {
     @GetMapping("/professor/{professorId}")
     public ResponseEntity<List<ComportamentoDtoOut>> buscarPorProfessor(@PathVariable Long professorId) {
 
-        this.comportamentoService.buscarPorProfessor(professorId);
-        return ResponseEntity.ok().build();
+        List<ComportamentoDtoOut> comportamento = comportamentoService.buscarPorProfessor(professorId);
+        return ResponseEntity.ok(comportamento);
     }
 
     /**
@@ -121,8 +122,8 @@ public class ComportamentoController {
     @GetMapping("/aluno/{alunoId}")
     public ResponseEntity<List<ComportamentoDtoOut>> buscarPorAluno(@PathVariable Long alunoId) {
 
-        this.comportamentoService.buscarPorAluno(alunoId);
-        return ResponseEntity.ok().build();
+        List<ComportamentoDtoOut> comportamento = comportamentoService.buscarPorAluno(alunoId);
+        return ResponseEntity.ok(comportamento);
     }
 
     /**
@@ -131,8 +132,8 @@ public class ComportamentoController {
     @GetMapping("/turma/{turmaId}")
     public ResponseEntity<List<ComportamentoDtoOut>> buscarPorTurma(@PathVariable Long turmaId) {
 
-        this.comportamentoService.buscarPorTurma(turmaId);
-        return ResponseEntity.ok().build();
+        List<ComportamentoDtoOut> comportamento = comportamentoService.buscarPorTurma(turmaId);
+        return ResponseEntity.ok(comportamento);
     }
 
     /**
@@ -141,8 +142,8 @@ public class ComportamentoController {
     @GetMapping("/hoje")
     public ResponseEntity<List<ComportamentoDtoOut>> buscarComportamentosDeHoje() {
 
-        this.comportamentoService.buscarComportamentosDeHoje();
-        return ResponseEntity.ok().build();
+        List<ComportamentoDtoOut> comportamento = comportamentoService.buscarComportamentosDeHoje();
+        return ResponseEntity.ok(comportamento);
     }
 
     /**

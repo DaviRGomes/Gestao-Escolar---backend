@@ -35,6 +35,8 @@ public class Aluno {
     @Column(nullable = false)
     private Boolean ativo = true;
 
+    // Removido: campo email
+    private String email;
 
 
     @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -57,11 +59,6 @@ public class Aluno {
         this.nome = nome;
         this.dataNascimento = dataNascimento;
         this.cpf = cpf;
-    }
-
-    public String getEmail() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getEmail'");
     }
 
 
