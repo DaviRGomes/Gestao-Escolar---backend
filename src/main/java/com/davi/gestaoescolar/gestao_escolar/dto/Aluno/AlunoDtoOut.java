@@ -1,7 +1,7 @@
 package com.davi.gestaoescolar.gestao_escolar.dto.Aluno;
 
-import com.davi.gestaoescolar.gestao_escolar.dto.Responsavel.ResponsavelDtoSimples;
-import com.davi.gestaoescolar.gestao_escolar.dto.Matricula.MatriculaDtoSimples;
+import com.davi.gestaoescolar.gestao_escolar.dto.Responsavel.ResponsavelDtoOut;
+import com.davi.gestaoescolar.gestao_escolar.dto.Matricula.MatriculaDtoOut;
 
 
 import lombok.AllArgsConstructor;
@@ -22,7 +22,14 @@ public class AlunoDtoOut {
     private String observacoes;
     private Boolean ativo;
     // Removido: private String email;
-    private List<MatriculaDtoSimples> matriculas;
-    private List<ResponsavelDtoSimples> responsaveis;
+    private List<MatriculaDtoOut> matriculas;
+    private List<ResponsavelDtoOut> responsaveis;
+    
+    public AlunoDtoOut(Long id, String nome) {
+        this.id = id;
+        this.nome = nome;
+    }
+
+    
 
 }

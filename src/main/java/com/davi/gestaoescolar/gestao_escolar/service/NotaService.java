@@ -1,11 +1,9 @@
 package com.davi.gestaoescolar.gestao_escolar.service;
 
+import com.davi.gestaoescolar.gestao_escolar.dto.Aluno.AlunoDtoOut;
 import com.davi.gestaoescolar.gestao_escolar.dto.Nota.NotaDtoIn;
 import com.davi.gestaoescolar.gestao_escolar.dto.Nota.NotaDtoOut;
-import com.davi.gestaoescolar.gestao_escolar.dto.Aluno.AlunoDtoOut;
-import com.davi.gestaoescolar.gestao_escolar.dto.Aluno.AlunoDtoSimples;
 import com.davi.gestaoescolar.gestao_escolar.dto.RegistroAula.RegistroAulaDtoOut;
-import com.davi.gestaoescolar.gestao_escolar.dto.RegistroAula.RegistroAulaDtoSimples;
 import com.davi.gestaoescolar.gestao_escolar.exception.NotaException;
 import com.davi.gestaoescolar.gestao_escolar.exception.GlobalException;
 import com.davi.gestaoescolar.gestao_escolar.model.Aluno;
@@ -39,21 +37,15 @@ public class NotaService {
     private RegistroAulaRepository registroAulaRepository;
 
     /**
-     * Métodos auxiliares para conversão de DTOs
+     * Método auxiliar para conversão de DTO
      */
-    private List<NotaDtoOut> toDtos(List<Nota> notas) {
-        return notas.stream()
-                .map(this::toDTO)
-                .collect(Collectors.toList());
-    }
-
     private NotaDtoOut toDTO(Nota nota) {
-        RegistroAulaDtoSimples registroAulaDto = new RegistroAulaDtoSimples(
+        RegistroAulaDtoOut registroAulaDto = new RegistroAulaDtoOut(
                 nota.getRegistroAula() != null ? nota.getRegistroAula().getId() : null,
                 nota.getRegistroAula() != null ? nota.getRegistroAula().getData() : null,
                 nota.getRegistroAula() != null ? nota.getRegistroAula().getDescricao() : null
         );
-        AlunoDtoSimples alunoDto = new AlunoDtoSimples(
+        AlunoDtoOut alunoDto = new AlunoDtoOut(
                 nota.getAluno() != null ? nota.getAluno().getId() : null,
                 nota.getAluno() != null ? nota.getAluno().getNome() : null
         );
@@ -67,10 +59,6 @@ public class NotaService {
                 registroAulaDto,
                 alunoDto
         );
-    }
-
-    private Optional<NotaDtoOut> toDTO(Optional<Nota> nota) {
-        return nota.map(this::toDTO);
     }
 
     /**

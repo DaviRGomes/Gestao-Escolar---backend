@@ -18,5 +18,10 @@ public class ProfessorDtoOut {
     private LocalDate dataContratacao;
     private String cargo;
     private Boolean ativo;
+    
+    public ProfessorDtoOut(Long id, String nome) {
+        this.id = id;
+        this.nome = nome;
+    }
 
 }

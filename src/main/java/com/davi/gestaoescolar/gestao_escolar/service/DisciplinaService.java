@@ -28,22 +28,10 @@ public class DisciplinaService {
     /**
      * Métodos auxiliares para conversão de DTOs
      */
-    private List<DisciplinaDtoOut> toDtos(List<Disciplina> disciplinas) {
-        return disciplinas.stream()
-                .map(this::toDTO)
-                .collect(Collectors.toList());
-    }
-
     private DisciplinaDtoOut toDTO(Disciplina disciplina) {
         ProfessorDtoOut professorDto = new ProfessorDtoOut(
-                disciplina.getProfessor().getId(),
-                disciplina.getProfessor().getNome(),
-                disciplina.getProfessor().getCpf(),
-                disciplina.getProfessor().getFormacao(),
-                disciplina.getProfessor().getTelefone(),
-                disciplina.getProfessor().getDataContratacao(),
-                disciplina.getProfessor().getCargo(),
-                disciplina.getProfessor().getAtivo()
+                disciplina.getProfessor() != null ? disciplina.getProfessor().getId() : null,
+                disciplina.getProfessor() != null ? disciplina.getProfessor().getNome() : null
         );
 
         return new DisciplinaDtoOut(
@@ -125,7 +113,10 @@ public class DisciplinaService {
         if (nome == null || nome.trim().isEmpty()) {
             throw new DisciplinaException.DadosInvalidosException("Nome não pode ser vazio");
         }
-        return toDtos(disciplinaRepository.findByNomeContainingIgnoreCase(nome.trim()));
+        return disciplinaRepository.findByNomeContainingIgnoreCase(nome.trim())
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -136,7 +127,10 @@ public class DisciplinaService {
         if (professorId == null) {
             throw new DisciplinaException.DadosInvalidosException("ID do professor não pode ser nulo");
         }
-        return toDtos(disciplinaRepository.findByProfessorId(professorId));
+        return disciplinaRepository.findByProfessorId(professorId)
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -147,7 +141,10 @@ public class DisciplinaService {
         if (turmaId == null) {
             throw new DisciplinaException.DadosInvalidosException("ID da turma não pode ser nulo");
         }
-        return toDtos(disciplinaRepository.findByTurmasId(turmaId));
+        return disciplinaRepository.findByTurmasId(turmaId)
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -155,7 +152,10 @@ public class DisciplinaService {
      */
     @Transactional(readOnly = true)
     public List<DisciplinaDtoOut> listarTodas() {
-        return toDtos(disciplinaRepository.findAll());
+        return disciplinaRepository.findAll()
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -163,7 +163,10 @@ public class DisciplinaService {
      */
     @Transactional(readOnly = true)
     public List<DisciplinaDtoOut> listarAtivas() {
-        return toDtos(disciplinaRepository.findByAtivoTrue());
+        return disciplinaRepository.findByAtivoTrue()
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**

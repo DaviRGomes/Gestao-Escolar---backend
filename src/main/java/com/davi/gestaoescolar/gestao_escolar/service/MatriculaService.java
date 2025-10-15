@@ -1,9 +1,9 @@
 package com.davi.gestaoescolar.gestao_escolar.service;
 
-import com.davi.gestaoescolar.gestao_escolar.dto.Aluno.AlunoDtoSimples;
+import com.davi.gestaoescolar.gestao_escolar.dto.Aluno.AlunoDtoOut;
 import com.davi.gestaoescolar.gestao_escolar.dto.Matricula.MatriculaDtoIn;
 import com.davi.gestaoescolar.gestao_escolar.dto.Matricula.MatriculaDtoOut;
-import com.davi.gestaoescolar.gestao_escolar.dto.Turma.TurmaDtoSimples;
+import com.davi.gestaoescolar.gestao_escolar.dto.Turma.TurmaDtoOut;
 import com.davi.gestaoescolar.gestao_escolar.exception.MatriculaException;
 import com.davi.gestaoescolar.gestao_escolar.model.Aluno;
 import com.davi.gestaoescolar.gestao_escolar.model.Matricula;
@@ -34,6 +34,31 @@ public class MatriculaService {
     @Autowired
     private TurmaRepository turmaRepository;
 
+
+
+    /**
+     * Método privado para converter Matricula para MatriculaDtoOut
+     */
+    private MatriculaDtoOut toDTO(Matricula matricula) {
+        AlunoDtoOut alunoDto = new AlunoDtoOut(
+                matricula.getAluno() != null ? matricula.getAluno().getId() : null,
+                matricula.getAluno() != null ? matricula.getAluno().getNome() : null
+                );
+
+        TurmaDtoOut turmaDto = new TurmaDtoOut(
+                matricula.getTurma() != null ? matricula.getTurma().getId() : null,
+                matricula.getTurma() != null ? matricula.getTurma().getNome() : null
+        );
+
+        return new MatriculaDtoOut(
+                matricula.getId(),
+                matricula.getDataMatricula(),
+                matricula.getSituacao(),
+                alunoDto,
+                turmaDto
+        );
+    }
+    
     /**
      * Realiza uma nova matrícula
      */
@@ -102,7 +127,7 @@ public class MatriculaService {
         if (matricula.isEmpty()) {
             throw new MatriculaException.MatriculaNaoEncontradaException("Matrícula não encontrada com ID: " + id);
         }
-        return toDTO(matricula);
+        return matricula.map(this::toDTO);
     }
 
     /**
@@ -403,34 +428,5 @@ public class MatriculaService {
         }
     }
 
-    /**
-     * Método privado para converter Matricula para MatriculaDtoOut
-     */
-    private MatriculaDtoOut toDTO(Matricula matricula) {
-        AlunoDtoSimples alunoDto = new AlunoDtoSimples(
-                matricula.getAluno().getId(),
-                matricula.getAluno().getNome()
-                );
-
-        TurmaDtoSimples turmaDto = new TurmaDtoSimples(
-                matricula.getTurma().getId(),
-                matricula.getTurma().getNome()
-        );
-
-        return new MatriculaDtoOut(
-                matricula.getId(),
-                matricula.getDataMatricula(),
-                matricula.getSituacao(),
-                alunoDto,
-                turmaDto
-        );
-    }
-
-    private Optional<MatriculaDtoOut> toDTO(Optional<Matricula> matricula) {
-        return matricula.map(this::toDTO);
-    }
-
-    private List<MatriculaDtoOut> toDTO(List<Matricula> matriculas) {
-        return matriculas.stream().map(this::toDTO).collect(Collectors.toList());
-    }
+    
 }

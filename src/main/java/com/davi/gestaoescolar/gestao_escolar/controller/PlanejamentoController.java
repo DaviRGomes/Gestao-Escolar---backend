@@ -25,11 +25,6 @@ public class PlanejamentoController {
     @Autowired
     private PlanejamentoService planejamentoService;
     
-    @Autowired
-    private DisciplinaService disciplinaService;
-    
-    @Autowired
-    private TurmaService turmaService;
 
     /**
      * Criar um novo planejamento

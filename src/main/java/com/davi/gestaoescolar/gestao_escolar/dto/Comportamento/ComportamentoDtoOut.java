@@ -1,7 +1,7 @@
 package com.davi.gestaoescolar.gestao_escolar.dto.Comportamento;
 
-import com.davi.gestaoescolar.gestao_escolar.dto.Aluno.AlunoDtoSimples;
-import com.davi.gestaoescolar.gestao_escolar.dto.Professor.ProfessorDtoSimples;
+import com.davi.gestaoescolar.gestao_escolar.dto.Aluno.AlunoDtoOut;
+import com.davi.gestaoescolar.gestao_escolar.dto.Professor.ProfessorDtoOut;
 import com.davi.gestaoescolar.gestao_escolar.model.enums.Gravidade;
 import com.davi.gestaoescolar.gestao_escolar.model.enums.TipoComportamento;
 import lombok.Getter;
@@ -20,8 +20,8 @@ public class ComportamentoDtoOut {
     private LocalDate date;
     private TipoComportamento tipo;
     private Gravidade nivel;
-    private ProfessorDtoSimples professor;
-    private AlunoDtoSimples aluno;
+    private ProfessorDtoOut professor;
+    private AlunoDtoOut aluno;
     
     // Construtor padrão
     public ComportamentoDtoOut() {}

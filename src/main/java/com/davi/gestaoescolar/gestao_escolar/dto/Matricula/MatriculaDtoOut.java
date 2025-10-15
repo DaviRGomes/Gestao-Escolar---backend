@@ -1,7 +1,7 @@
 package com.davi.gestaoescolar.gestao_escolar.dto.Matricula;
 
-import com.davi.gestaoescolar.gestao_escolar.dto.Aluno.AlunoDtoSimples;
-import com.davi.gestaoescolar.gestao_escolar.dto.Turma.TurmaDtoSimples;
+import com.davi.gestaoescolar.gestao_escolar.dto.Aluno.AlunoDtoOut;
+import com.davi.gestaoescolar.gestao_escolar.dto.Turma.TurmaDtoOut;
 import com.davi.gestaoescolar.gestao_escolar.model.enums.SituacaoMatricula;
 
 import lombok.AllArgsConstructor;
@@ -18,9 +18,9 @@ public class MatriculaDtoOut {
     private Long id;
     private LocalDate dataMatricula;
     private SituacaoMatricula situacao;
-    private AlunoDtoSimples aluno;
-    private TurmaDtoSimples turma;
-
+    private AlunoDtoOut aluno;
+    private TurmaDtoOut turma;
+    
     // Construtor padrão
     public MatriculaDtoOut() {}
 

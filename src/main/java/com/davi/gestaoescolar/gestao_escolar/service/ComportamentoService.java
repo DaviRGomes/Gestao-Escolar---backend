@@ -3,9 +3,7 @@ package com.davi.gestaoescolar.gestao_escolar.service;
 import com.davi.gestaoescolar.gestao_escolar.dto.Comportamento.ComportamentoDtoIn;
 import com.davi.gestaoescolar.gestao_escolar.dto.Comportamento.ComportamentoDtoOut;
 import com.davi.gestaoescolar.gestao_escolar.dto.Aluno.AlunoDtoOut;
-import com.davi.gestaoescolar.gestao_escolar.dto.Aluno.AlunoDtoSimples;
 import com.davi.gestaoescolar.gestao_escolar.dto.Professor.ProfessorDtoOut;
-import com.davi.gestaoescolar.gestao_escolar.dto.Professor.ProfessorDtoSimples;
 import com.davi.gestaoescolar.gestao_escolar.exception.ComportamentoException;
 import com.davi.gestaoescolar.gestao_escolar.exception.GlobalException;
 import com.davi.gestaoescolar.gestao_escolar.model.Aluno;
@@ -41,21 +39,16 @@ public class ComportamentoService {
     /**
      * Métodos auxiliares para conversão de DTOs
      */
-    private List<ComportamentoDtoOut> toDtos(List<Comportamento> comportamentos) {
-        return comportamentos.stream()
-                .map(this::toDTO)
-                .collect(Collectors.toList());
-    }
 
     private ComportamentoDtoOut toDTO(Comportamento comportamento) {
-        ProfessorDtoSimples professorDto = new ProfessorDtoSimples(
-                comportamento.getProfessor().getId(),
-                comportamento.getProfessor().getNome()
+        ProfessorDtoOut professorDto = new ProfessorDtoOut(
+                comportamento.getProfessor() != null ? comportamento.getProfessor().getId() : null,
+                comportamento.getProfessor() != null ? comportamento.getProfessor().getNome() : null
         );
 
-        AlunoDtoSimples alunoDto = new AlunoDtoSimples(
-                comportamento.getAluno().getId(),
-                comportamento.getAluno().getNome()
+        AlunoDtoOut alunoDto = new AlunoDtoOut(
+                comportamento.getAluno() != null ? comportamento.getAluno().getId() : null,
+                comportamento.getAluno() != null ? comportamento.getAluno().getNome() : null
         );
 
         return new ComportamentoDtoOut(
@@ -67,10 +60,6 @@ public class ComportamentoService {
                 professorDto,
                 alunoDto
         );
-    }
-
-    private Optional<ComportamentoDtoOut> toDTO(Optional<Comportamento> comportamento) {
-        return comportamento.map(this::toDTO);
     }
 
     /**
@@ -128,7 +117,8 @@ public class ComportamentoService {
      */
     @Transactional(readOnly = true)
     public Optional<ComportamentoDtoOut> buscarPorId(Long id) {
-        return toDTO(comportamentoRepository.findById(id));
+        Optional<Comportamento> comportamentoOptional = comportamentoRepository.findById(id);
+        return comportamentoOptional.map(this::toDTO);
     }
 
     /**
@@ -139,7 +129,10 @@ public class ComportamentoService {
         if (data == null) {
             throw new GlobalException.DadosInvalidosException("Data não pode ser nula");
         }
-        return toDtos(comportamentoRepository.findByDate(data));
+        return comportamentoRepository.findByDate(data)
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -153,7 +146,10 @@ public class ComportamentoService {
         if (dataInicio.isAfter(dataFim)) {
             throw new GlobalException.DadosInvalidosException("Data de início não pode ser posterior à data de fim");
         }
-        return toDtos(comportamentoRepository.findByDateBetween(dataInicio, dataFim));
+        return comportamentoRepository.findByDateBetween(dataInicio, dataFim)
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -164,7 +160,10 @@ public class ComportamentoService {
         if (tipo == null) {
             throw new GlobalException.DadosInvalidosException("Tipo de comportamento não pode ser nulo");
         }
-        return toDtos(comportamentoRepository.findByTipo(tipo));
+        return comportamentoRepository.findByTipo(tipo)
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -175,7 +174,10 @@ public class ComportamentoService {
         if (nivel == null) {
             throw new GlobalException.DadosInvalidosException("Nível de gravidade não pode ser nulo");
         }
-        return toDtos(comportamentoRepository.findByNivel(nivel));
+        return comportamentoRepository.findByNivel(nivel)
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -186,7 +188,10 @@ public class ComportamentoService {
         if (professorId == null) {
             throw new GlobalException.DadosInvalidosException("ID do professor não pode ser nulo");
         }
-        return toDtos(comportamentoRepository.findByProfessorId(professorId));
+        return comportamentoRepository.findByProfessorId(professorId)
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -197,7 +202,10 @@ public class ComportamentoService {
         if (alunoId == null) {
             throw new GlobalException.DadosInvalidosException("ID do aluno não pode ser nulo");
         }
-        return toDtos(comportamentoRepository.findByAlunoId(alunoId));
+        return comportamentoRepository.findByAlunoId(alunoId)
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -208,7 +216,10 @@ public class ComportamentoService {
         if (turmaId == null) {
             throw new GlobalException.DadosInvalidosException("ID da turma não pode ser nulo");
         }
-        return toDtos(comportamentoRepository.findByTurmaId(turmaId));
+        return comportamentoRepository.findByTurmaId(turmaId)
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -216,7 +227,10 @@ public class ComportamentoService {
      */
     @Transactional(readOnly = true)
     public List<ComportamentoDtoOut> listarTodos() {
-        return toDtos(comportamentoRepository.findAll());
+        return comportamentoRepository.findAll()
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -224,7 +238,10 @@ public class ComportamentoService {
      */
     @Transactional(readOnly = true)
     public List<ComportamentoDtoOut> buscarComportamentosDeHoje() {
-        return toDtos(comportamentoRepository.findByDate(LocalDate.now()));
+        return comportamentoRepository.findByDate(LocalDate.now())
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**

@@ -2,8 +2,8 @@ package com.davi.gestaoescolar.gestao_escolar.service;
 
 import com.davi.gestaoescolar.gestao_escolar.dto.Aluno.AlunoDtoIn;
 import com.davi.gestaoescolar.gestao_escolar.dto.Aluno.AlunoDtoOut;
-import com.davi.gestaoescolar.gestao_escolar.dto.Matricula.MatriculaDtoSimples;
-import com.davi.gestaoescolar.gestao_escolar.dto.Responsavel.ResponsavelDtoSimples;
+import com.davi.gestaoescolar.gestao_escolar.dto.Matricula.MatriculaDtoOut;
+import com.davi.gestaoescolar.gestao_escolar.dto.Responsavel.ResponsavelDtoOut;
 import com.davi.gestaoescolar.gestao_escolar.exception.AlunoException;
 import com.davi.gestaoescolar.gestao_escolar.model.Aluno;
 import com.davi.gestaoescolar.gestao_escolar.model.AlunoResponsavel;
@@ -36,21 +36,15 @@ public class AlunoService {
     /**
      * Métodos auxiliares para conversão de DTOs
      */
-    private List<AlunoDtoOut> toDtos(List<Aluno> alunos) {
-        return alunos.stream()
-                .map(this::toDTO)
-                .collect(Collectors.toList());
-    }
-
     private AlunoDtoOut toDTO(Aluno aluno) {
-        List<MatriculaDtoSimples> matriculasDTO = aluno.getMatriculas().stream()
-                .map(m -> new MatriculaDtoSimples(
+        List<MatriculaDtoOut> matriculasDTO = aluno.getMatriculas().stream()
+                .map(m -> new MatriculaDtoOut(
                     // preencha os campos conforme seu DTO simples de matrícula
                 ))
                 .collect(Collectors.toList());
 
-        List<ResponsavelDtoSimples> responsaveisDTO = aluno.getResponsaveis().stream()
-                .map(ar -> new ResponsavelDtoSimples(
+        List<ResponsavelDtoOut> responsaveisDTO = aluno.getResponsaveis().stream()
+                .map(ar -> new ResponsavelDtoOut(
                     ar.getResponsavel().getId(),
                     ar.getResponsavel().getNome(),
                     ar.getResponsavel().getParentesco()
@@ -216,7 +210,10 @@ public class AlunoService {
      * @return Lista de DTOs dos alunos encontrados
      */
     public List<AlunoDtoOut> buscarPorNome(String nome) {
-        return toDtos(alunoRepository.findByNomeContainingIgnoreCase(nome));
+        return alunoRepository.findByNomeContainingIgnoreCase(nome)
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -224,7 +221,10 @@ public class AlunoService {
      * @return Lista de DTOs de todos os alunos
      */
     public List<AlunoDtoOut> listarTodos() {
-        return toDtos(alunoRepository.findAll());
+        return alunoRepository.findAll()
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -232,7 +232,10 @@ public class AlunoService {
      * @return Lista de DTOs dos alunos ativos
      */
     public List<AlunoDtoOut> listarAtivos() {
-        return toDtos(alunoRepository.findByAtivoTrue());
+        return alunoRepository.findByAtivoTrue()
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     public AlunoDtoOut ativar(Long id) {

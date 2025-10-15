@@ -28,22 +28,9 @@ public class SecretariaDtoOut {
     public SecretariaDtoOut() {}
     
     // Construtor com parâmetros
-    public SecretariaDtoOut(Long id, String email, String nome, String cpf, String telefone,
-                           LocalDate dataContratacao, String cargo, String matricula,
-                           Perfil perfil, LocalDateTime ultimoAcesso, LocalDate dataNascimento,
-                           String endereco, Boolean ativo) {
+    public SecretariaDtoOut(Long id, String nome, String cargo) {
         this.id = id;
-        this.email = email;
         this.nome = nome;
-        this.cpf = cpf;
-        this.telefone = telefone;
-        this.dataContratacao = dataContratacao;
         this.cargo = cargo;
-        this.matricula = matricula;
-        this.perfil = perfil;
-        this.ultimoAcesso = ultimoAcesso;
-        this.dataNascimento = dataNascimento;
-        this.endereco = endereco;
-        this.ativo = ativo;
     }
 }

@@ -2,7 +2,9 @@ package com.davi.gestaoescolar.gestao_escolar.service;
 
 import com.davi.gestaoescolar.gestao_escolar.dto.ConteudoPlanejado.ConteudoPlanejadoDtoIn;
 import com.davi.gestaoescolar.gestao_escolar.dto.ConteudoPlanejado.ConteudoPlanejadoDtoOut;
+import com.davi.gestaoescolar.gestao_escolar.dto.Disciplina.DisciplinaDtoOut;
 import com.davi.gestaoescolar.gestao_escolar.dto.Planejamento.PlanejamentoDtoOut;
+import com.davi.gestaoescolar.gestao_escolar.dto.Turma.TurmaDtoOut;
 import com.davi.gestaoescolar.gestao_escolar.exception.ConteudoPlanejadoException;
 import com.davi.gestaoescolar.gestao_escolar.model.ConteudoPlanejado;
 import com.davi.gestaoescolar.gestao_escolar.model.Planejamento;
@@ -35,12 +37,6 @@ public class ConteudoPlanejadoService {
     /**
      * Métodos auxiliares para conversão de DTOs
      */
-    private List<ConteudoPlanejadoDtoOut> toDtos(List<ConteudoPlanejado> conteudos) {
-        return conteudos.stream()
-                .map(this::toDTO)
-                .collect(Collectors.toList());
-    }
-
     private ConteudoPlanejadoDtoOut toDTO(ConteudoPlanejado conteudo) {
         if (conteudo == null) {
             return null;
@@ -55,11 +51,11 @@ public class ConteudoPlanejadoService {
                     p.getDescricao(),
                     p.getSemestre(),
                     p.getAno(),
-                    new PlanejamentoDtoOut.DisciplinaDTO(
+                    new DisciplinaDtoOut(
                         p.getDisciplina() != null ? p.getDisciplina().getId() : null,
                         p.getDisciplina() != null ? p.getDisciplina().getNome() : null
                     ),
-                    new PlanejamentoDtoOut.TurmaDTO(
+                    new TurmaDtoOut(
                         p.getTurma() != null ? p.getTurma().getId() : null,
                         p.getTurma() != null ? p.getTurma().getNome() : null
                     ),
@@ -165,7 +161,9 @@ public class ConteudoPlanejadoService {
      */
     public List<ConteudoPlanejadoDtoOut> listarTodos() {
         List<ConteudoPlanejado> conteudos = conteudoPlanejadoRepository.findAll();
-        return toDtos(conteudos);
+        return conteudos.stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -180,7 +178,9 @@ public class ConteudoPlanejadoService {
             throw new ConteudoPlanejadoException.DadosInvalidosException("ID do planejamento não pode ser nulo");
         }
         List<ConteudoPlanejado> conteudos = conteudoPlanejadoRepository.findByPlanejamentoId(planejamentoId);
-        return toDtos(conteudos);
+        return conteudos.stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -195,7 +195,9 @@ public class ConteudoPlanejadoService {
             throw new ConteudoPlanejadoException.DadosInvalidosException("Data prevista não pode ser nula");
         }
         List<ConteudoPlanejado> conteudos = conteudoPlanejadoRepository.findByDataPrevista(dataPrevista);
-        return toDtos(conteudos);
+        return conteudos.stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     // /**

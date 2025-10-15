@@ -28,6 +28,12 @@ public class ConteudoPlanejadoDtoOut {
     private Integer ordemApresentacao;
     private PlanejamentoDtoOut planejamento;
 
+    public ConteudoPlanejadoDtoOut(Long id, String conteudo, LocalDate dataPrevista) {
+        this.id = id;
+        this.conteudo = conteudo;
+        this.dataPrevista = dataPrevista;
+    }
+
     // Construtor padrão
     public ConteudoPlanejadoDtoOut() {}
 

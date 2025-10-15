@@ -1,11 +1,14 @@
 package com.davi.gestaoescolar.gestao_escolar.dto.Disciplina;
 
 import com.davi.gestaoescolar.gestao_escolar.dto.Professor.ProfessorDtoOut;
+
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
+@AllArgsConstructor
 public class DisciplinaDtoOut {
     
     private Long id;
@@ -19,13 +22,11 @@ public class DisciplinaDtoOut {
     public DisciplinaDtoOut() {}
     
     // Construtor com parâmetros
-    public DisciplinaDtoOut(Long id, String nome, Integer cargaHoraria, String descricao, 
-                           Boolean ativo, ProfessorDtoOut professor) {
+    public DisciplinaDtoOut(Long id, String nome) {
         this.id = id;
         this.nome = nome;
-        this.cargaHoraria = cargaHoraria;
-        this.descricao = descricao;
-        this.ativo = ativo;
-        this.professor = professor;
     }
+
+
+    
 }

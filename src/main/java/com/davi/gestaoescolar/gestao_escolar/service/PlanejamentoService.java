@@ -1,7 +1,9 @@
 package com.davi.gestaoescolar.gestao_escolar.service;
 
+import com.davi.gestaoescolar.gestao_escolar.dto.Disciplina.DisciplinaDtoSimples;
 import com.davi.gestaoescolar.gestao_escolar.dto.Planejamento.PlanejamentoDtoIn;
 import com.davi.gestaoescolar.gestao_escolar.dto.Planejamento.PlanejamentoDtoOut;
+import com.davi.gestaoescolar.gestao_escolar.dto.Turma.TurmaDtoSimples;
 import com.davi.gestaoescolar.gestao_escolar.exception.PlanejamentoException;
 import com.davi.gestaoescolar.gestao_escolar.model.Disciplina;
 import com.davi.gestaoescolar.gestao_escolar.model.Planejamento;
@@ -45,11 +47,22 @@ public class PlanejamentoService {
     }
 
     private PlanejamentoDtoOut toDTO(Planejamento planejamento){
-        return new PlanejamentoDtoOut(planejamento.getId(), planejamento.getDescricao(),
-                planejamento.getSemestre(), planejamento.getAno(),
-                new PlanejamentoDtoOut.DisciplinaDTO(planejamento.getDisciplina().getId(), planejamento.getDisciplina().getNome()),
-                new PlanejamentoDtoOut.TurmaDTO(planejamento.getTurma().getId(), planejamento.getTurma().getNome()),
-                planejamento.getDataCriacao(), planejamento.getDataAtualizacao());
+        return new PlanejamentoDtoOut(
+            planejamento.getId(),
+            planejamento.getDescricao(),
+            planejamento.getSemestre(),
+            planejamento.getAno(),
+            new DisciplinaDtoSimples(
+                planejamento.getDisciplina() != null ? planejamento.getDisciplina().getId() : null,
+                planejamento.getDisciplina() != null ? planejamento.getDisciplina().getNome() : null
+            ),
+            new TurmaDtoSimples(
+                planejamento.getTurma() != null ? planejamento.getTurma().getId() : null, 
+                planejamento.getTurma() != null ? planejamento.getTurma().getNome() : null
+            ),
+            planejamento.getDataCriacao(),
+            planejamento.getDataAtualizacao()
+        );
     }
 
 

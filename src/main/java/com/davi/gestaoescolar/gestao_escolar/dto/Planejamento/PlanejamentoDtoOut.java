@@ -6,6 +6,9 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+import com.davi.gestaoescolar.gestao_escolar.dto.Disciplina.DisciplinaDtoOut;
+import com.davi.gestaoescolar.gestao_escolar.dto.Turma.TurmaDtoOut;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -14,24 +17,26 @@ public class PlanejamentoDtoOut {
     private String descricao;
     private String semestre;
     private Integer ano;
-    private DisciplinaDTO disciplina;
-    private TurmaDTO turma;
+    private DisciplinaDtoOut disciplina;    
+    private TurmaDtoOut turma;
     private LocalDateTime dataCriacao;
     private LocalDateTime dataAtualizacao;
 
-    @Getter
-    @Setter
-    @AllArgsConstructor
-    public static class DisciplinaDTO {
-        private Long id;
-        private String nome;
+    public PlanejamentoDtoOut() {
     }
+    
+    // Construtor com todos os campos
+    public PlanejamentoDtoOut(Long id, String descricao, String semestre, Integer ano, DisciplinaDtoOut disciplina,
+            TurmaDtoOut turma) {
+        this.id = id;
+        this.descricao = descricao;
+        this.semestre = semestre;
+        this.ano = ano;
+        this.disciplina = disciplina;
+        this.turma = turma;
+    }
+  
 
-    @Getter
-    @Setter
-    @AllArgsConstructor
-    public static class TurmaDTO {
-        private Long id;
-        private String nome;
-    }
+    
+
 }
