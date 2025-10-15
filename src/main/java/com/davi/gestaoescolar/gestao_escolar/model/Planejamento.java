@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -14,6 +15,7 @@ import java.util.List;
         uniqueConstraints = @UniqueConstraint(columnNames = {"disciplina_id", "turma_id", "semestre", "ano"}))
 @Getter
 @Setter
+@NoArgsConstructor
 public class Planejamento {
 
     @Id

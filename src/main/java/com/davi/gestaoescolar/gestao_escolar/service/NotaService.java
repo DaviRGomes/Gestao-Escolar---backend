@@ -49,14 +49,13 @@ public class NotaService {
 
     private NotaDtoOut toDTO(Nota nota) {
         RegistroAulaDtoSimples registroAulaDto = new RegistroAulaDtoSimples(
-                nota.getRegistroAula().getId(),
-                nota.getRegistroAula().getData(),
-                nota.getRegistroAula().getDescricao()
+                nota.getRegistroAula() != null ? nota.getRegistroAula().getId() : null,
+                nota.getRegistroAula() != null ? nota.getRegistroAula().getData() : null,
+                nota.getRegistroAula() != null ? nota.getRegistroAula().getDescricao() : null
         );
-
         AlunoDtoSimples alunoDto = new AlunoDtoSimples(
-                nota.getAluno().getId(),
-                nota.getAluno().getNome()
+                nota.getAluno() != null ? nota.getAluno().getId() : null,
+                nota.getAluno() != null ? nota.getAluno().getNome() : null
         );
 
         return new NotaDtoOut(

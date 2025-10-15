@@ -41,22 +41,20 @@ public class MatriculaService {
         validarDadosMatricula(dto);
         validarAlunoETurma(dto.getAlunoId(), dto.getTurmaId());
         verificarMatriculaDuplicada(dto.getAlunoId(), dto.getTurmaId());
-        
-        // Define a data de matrícula como hoje se não foi informada
+
         if (dto.getDataMatricula() == null) {
             dto.setDataMatricula(LocalDate.now());
         }
-        
-        // Define situação como ATIVA se não foi informada
+
         if (dto.getSituacao() == null) {
             dto.setSituacao(SituacaoMatricula.EM_PROCESSO);
         }
-         
+
         Matricula matricula = new Matricula(
             dto.getDataMatricula(),
             dto.getSituacao(),
-            alunoRepository.findById(dto.getAlunoId()).orElseThrow(() -> new MatriculaException("Aluno não encontrado")),
-            turmaRepository.findById(dto.getTurmaId()).orElseThrow(() -> new MatriculaException("Turma não encontrada"))
+            alunoRepository.findById(dto.getAlunoId()).orElseThrow(() -> new MatriculaException.AlunoInvalidoException("Aluno não encontrado")),
+            turmaRepository.findById(dto.getTurmaId()).orElseThrow(() -> new MatriculaException.TurmaInvalidaException("Turma não encontrada"))
         );
 
         return toDTO(matriculaRepository.save(matricula));
@@ -68,31 +66,30 @@ public class MatriculaService {
     public MatriculaDtoOut atualizarMatricula(Long id, MatriculaDtoIn matriculaAtualizada) {
         Optional<Matricula> matriculaExistente = matriculaRepository.findById(id);
         if (matriculaExistente.isEmpty()) {
-            throw new RuntimeException("Matrícula não encontrada com ID: " + id);
+            throw new MatriculaException.MatriculaNaoEncontradaException("Matrícula não encontrada com ID: " + id);
         }
 
         validarDadosMatricula(matriculaAtualizada);
-        
+
         Matricula matricula = matriculaExistente.get();
         matricula.setDataMatricula(matriculaAtualizada.getDataMatricula());
         matricula.setSituacao(matriculaAtualizada.getSituacao());
-        
-        // Só permite alterar aluno e turma se a situação permitir
-        if (matricula.getSituacao() != SituacaoMatricula.DESATIVADO && 
-            matricula.getSituacao() != SituacaoMatricula.DESATIVADO) {
-            
+
+        if (matricula.getSituacao() != SituacaoMatricula.DESATIVADO) {
             if (!matricula.getAluno().getId().equals(matriculaAtualizada.getAlunoId()) ||
                 !matricula.getTurma().getId().equals(matriculaAtualizada.getTurmaId())) {
-                
+
                 validarAlunoETurma(matriculaAtualizada.getAlunoId(), matriculaAtualizada.getTurmaId());
-                verificarMatriculaDuplicada(matriculaAtualizada.getAlunoId(), 
-                                          matriculaAtualizada.getTurmaId(), id);
-                
-                matricula.setAluno(alunoRepository.findById(matriculaAtualizada.getAlunoId()).orElseThrow(() -> new MatriculaException("Aluno não encontrado")));
-                matricula.setTurma(turmaRepository.findById(matriculaAtualizada.getTurmaId()).orElseThrow(() -> new MatriculaException("Turma não encontrada")));
+                verificarMatriculaDuplicada(matriculaAtualizada.getAlunoId(),
+                        matriculaAtualizada.getTurmaId(), id);
+
+                matricula.setAluno(alunoRepository.findById(matriculaAtualizada.getAlunoId())
+                        .orElseThrow(() -> new MatriculaException.AlunoInvalidoException("Aluno não encontrado")));
+                matricula.setTurma(turmaRepository.findById(matriculaAtualizada.getTurmaId())
+                        .orElseThrow(() -> new MatriculaException.TurmaInvalidaException("Turma não encontrada")));
             }
         }
-        
+
         return toDTO(matriculaRepository.save(matricula));
     }
 
@@ -101,7 +98,6 @@ public class MatriculaService {
      */
     @Transactional(readOnly = true)
     public Optional<MatriculaDtoOut> buscarPorId(Long id) {
-        
         Optional<Matricula> matricula = matriculaRepository.findById(id);
         if (matricula.isEmpty()) {
             throw new MatriculaException.MatriculaNaoEncontradaException("Matrícula não encontrada com ID: " + id);
@@ -234,12 +230,12 @@ public class MatriculaService {
         if (matricula.isEmpty()) {
             throw new MatriculaException.MatriculaNaoEncontradaException("Matrícula não encontrada com ID: " + id);
         }
-        
+
         Matricula matriculaEntity = matricula.get();
         if (matriculaEntity.getSituacao() == SituacaoMatricula.DESATIVADO) {
-            throw new RuntimeException("Matrícula já está desativada");
+            throw new MatriculaException.DadosInvalidosException("Matrícula já está desativada");
         }
-        
+
         matriculaEntity.setSituacao(SituacaoMatricula.DESATIVADO);
         matriculaRepository.save(matriculaEntity);
     }
@@ -252,12 +248,12 @@ public class MatriculaService {
         if (matricula.isEmpty()) {
             throw new MatriculaException.MatriculaNaoEncontradaException("Matrícula não encontrada com ID: " + id);
         }
-        
+
         Matricula matriculaEntity = matricula.get();
         if (matriculaEntity.getSituacao() != SituacaoMatricula.ATIVA) {
-            throw new RuntimeException("Só é possível colocar em processo matrículas ativas");
+            throw new MatriculaException.DadosInvalidosException("Só é possível colocar em processo matrículas ativas");
         }
-        
+
         matriculaEntity.setSituacao(SituacaoMatricula.EM_PROCESSO);
         matriculaRepository.save(matriculaEntity);
     }
@@ -270,12 +266,12 @@ public class MatriculaService {
         if (matricula.isEmpty()) {
             throw new MatriculaException.MatriculaNaoEncontradaException("Matrícula não encontrada com ID: " + id);
         }
-        
+
         Matricula matriculaEntity = matricula.get();
         if (matriculaEntity.getSituacao() == SituacaoMatricula.ATIVA) {
-            throw new RuntimeException("Matrícula já está ativa");
+            throw new MatriculaException.DadosInvalidosException("Matrícula já está ativa");
         }
-        
+
         matriculaEntity.setSituacao(SituacaoMatricula.ATIVA);
         matriculaRepository.save(matriculaEntity);
     }
@@ -286,14 +282,14 @@ public class MatriculaService {
     public void finalizar(Long id) {
         Optional<Matricula> matricula = matriculaRepository.findById(id);
         if (matricula.isEmpty()) {
-            throw new RuntimeException("Matrícula não encontrada com ID: " + id);
+            throw new MatriculaException.MatriculaNaoEncontradaException("Matrícula não encontrada com ID: " + id);
         }
-        
+
         Matricula matriculaEntity = matricula.get();
         if (matriculaEntity.getSituacao() != SituacaoMatricula.ATIVA) {
-            throw new RuntimeException("Só é possível finalizar matrículas ativas");
+            throw new MatriculaException.DadosInvalidosException("Só é possível finalizar matrículas ativas");
         }
-        
+
         matriculaEntity.setSituacao(SituacaoMatricula.DESATIVADO);
         matriculaRepository.save(matriculaEntity);
     }
@@ -302,38 +298,32 @@ public class MatriculaService {
      * Transfere um aluno para outra turma
      */
     public MatriculaDtoOut transferirTurma(Long matriculaId, Long novaTurmaId) {
-        // Buscar a matrícula existente
         Optional<Matricula> matriculaOpt = matriculaRepository.findById(matriculaId);
         if (matriculaOpt.isEmpty()) {
             throw new MatriculaException.MatriculaNaoEncontradaException("Matrícula não encontrada com ID: " + matriculaId);
         }
-        
+
         Matricula matricula = matriculaOpt.get();
-        
-        // Verificar se a matrícula está ativa
+
         if (matricula.getSituacao() != SituacaoMatricula.ATIVA) {
-            throw new RuntimeException("Só é possível transferir matrículas ativas");
+            throw new MatriculaException.DadosInvalidosException("Só é possível transferir matrículas ativas");
         }
-        
-        // Buscar a nova turma
+
         Optional<Turma> novaTurmaOpt = turmaRepository.findById(novaTurmaId);
         if (novaTurmaOpt.isEmpty()) {
-            throw new RuntimeException("Turma não encontrada com ID: " + novaTurmaId);
+            throw new MatriculaException.TurmaInvalidaException("Turma não encontrada com ID: " + novaTurmaId);
         }
-        
+
         Turma novaTurma = novaTurmaOpt.get();
-        
-        // Verificar se a turma está ativa
+
         if (!novaTurma.getAtivo()) {
-            throw new RuntimeException("Não é possível transferir para uma turma inativa");
+            throw new MatriculaException.DadosInvalidosException("Não é possível transferir para uma turma inativa");
         }
-        
-        // Verificar se já existe matrícula do aluno na nova turma
+
         verificarMatriculaDuplicada(matricula.getAluno().getId(), novaTurmaId, matriculaId);
-        
-        // Atualizar a turma da matrícula
+
         matricula.setTurma(novaTurma);
-        
+
         return toDTO(matriculaRepository.save(matricula));
     }
 
@@ -342,7 +332,7 @@ public class MatriculaService {
      */
     public void deletar(Long id) {
         if (!matriculaRepository.existsById(id)) {
-            throw new RuntimeException("Matrícula não encontrada com ID: " + id);
+            throw new MatriculaException.MatriculaNaoEncontradaException("Matrícula não encontrada com ID: " + id);
         }
         matriculaRepository.deleteById(id);
     }
@@ -374,20 +364,20 @@ public class MatriculaService {
     private void validarAlunoETurma(Long alunoId, Long turmaId) {
         Optional<Aluno> alunoExistente = alunoRepository.findById(alunoId);
         if (alunoExistente.isEmpty()) {
-            throw new RuntimeException("Aluno não encontrado com ID: " + alunoId);
+            throw new MatriculaException.AlunoInvalidoException("Aluno não encontrado com ID: " + alunoId);
         }
-        
+
         if (!alunoExistente.get().getAtivo()) {
-            throw new RuntimeException("Não é possível matricular um aluno inativo");
+            throw new MatriculaException.DadosInvalidosException("Não é possível matricular um aluno inativo");
         }
-        
+
         Optional<Turma> turmaExistente = turmaRepository.findById(turmaId);
         if (turmaExistente.isEmpty()) {
-            throw new RuntimeException("Turma não encontrada com ID: " + turmaId);
+            throw new MatriculaException.TurmaInvalidaException("Turma não encontrada com ID: " + turmaId);
         }
-        
+
         if (!turmaExistente.get().getAtivo()) {
-            throw new RuntimeException("Não é possível matricular em uma turma inativa");
+            throw new MatriculaException.DadosInvalidosException("Não é possível matricular em uma turma inativa");
         }
     }
     
@@ -403,12 +393,12 @@ public class MatriculaService {
      */
     private void verificarMatriculaDuplicada(Long alunoId, Long turmaId, Long matriculaIdExcluir) {
         List<Matricula> matriculasExistentes = matriculaRepository.findByAlunoId(alunoId);
-        
+
         for (Matricula matricula : matriculasExistentes) {
-            if (matricula.getTurma().getId().equals(turmaId) && 
+            if (matricula.getTurma().getId().equals(turmaId) &&
                 matricula.getSituacao() == SituacaoMatricula.ATIVA &&
                 (matriculaIdExcluir == null || !matricula.getId().equals(matriculaIdExcluir))) {
-                throw new RuntimeException("Aluno já possui matrícula ativa nesta turma");
+                throw new MatriculaException.MatriculaDuplicadaException("Aluno já possui matrícula ativa nesta turma");
             }
         }
     }

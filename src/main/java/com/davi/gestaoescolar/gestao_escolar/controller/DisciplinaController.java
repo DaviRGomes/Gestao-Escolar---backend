@@ -48,22 +48,38 @@ public class DisciplinaController {
     }
 
     /**
-     * Lista todas as disciplinas
+     * Lista todas as disciplinas com filtros opcionais (nome, ativo, cargaHorariaMinima)
      */
     @GetMapping
-    public ResponseEntity<List<DisciplinaDtoOut>> listarTodas() {
+    public ResponseEntity<List<DisciplinaDtoOut>> listarTodas(
+            @RequestParam(required = false) String nome,
+            @RequestParam(required = false) Boolean ativo,
+            @RequestParam(required = false) Integer cargaHorariaMinima
+    ) {
         List<DisciplinaDtoOut> disciplinas = disciplinaService.listarTodas();
+
+        if (nome != null && !nome.trim().isEmpty()) {
+            String termo = nome.trim().toLowerCase();
+            disciplinas = disciplinas.stream()
+                    .filter(d -> d.getNome() != null && d.getNome().toLowerCase().contains(termo))
+                    .toList();
+        }
+
+        if (ativo != null) {
+            disciplinas = disciplinas.stream()
+                    .filter(d -> d.getAtivo() != null && d.getAtivo().equals(ativo))
+                    .toList();
+        }
+
+        if (cargaHorariaMinima != null) {
+            disciplinas = disciplinas.stream()
+                    .filter(d -> d.getCargaHoraria() != null && d.getCargaHoraria() >= cargaHorariaMinima)
+                    .toList();
+        }
+
         return ResponseEntity.ok(disciplinas);
     }
 
-    /**
-     * Lista apenas disciplinas ativas
-     */
-    @GetMapping("/ativas")
-    public ResponseEntity<List<DisciplinaDtoOut>> listarAtivas() {
-        List<DisciplinaDtoOut> disciplinas = disciplinaService.listarAtivas();
-        return ResponseEntity.ok(disciplinas);
-    }
 
     /**
      * Busca disciplinas por nome
@@ -93,24 +109,6 @@ public class DisciplinaController {
     }
 
     /**
-     * Desativa uma disciplina (soft delete)
-     */
-    @PatchMapping("/{id}/desativar")
-    public ResponseEntity<Void> desativar(@PathVariable Long id) {
-        disciplinaService.desativar(id);
-        return ResponseEntity.noContent().build();
-    }
-
-    /**
-     * Reativa uma disciplina
-     */
-    @PatchMapping("/{id}/reativar")
-    public ResponseEntity<Void> reativar(@PathVariable Long id) {
-        disciplinaService.reativar(id);
-        return ResponseEntity.noContent().build();
-    }
-
-    /**
      * Deleta uma disciplina permanentemente
      */
     @DeleteMapping("/{id}")
@@ -128,5 +126,15 @@ public class DisciplinaController {
             @PathVariable Long professorId) {
         DisciplinaDtoOut disciplinaAtualizada = disciplinaService.atribuirProfessor(disciplinaId, professorId);
         return ResponseEntity.ok(disciplinaAtualizada);
+    }
+
+    /**
+     * Alterar status (ativo/inativo) da disciplina com 0 ou 1
+     */
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<DisciplinaDtoOut> alterarStatus(@PathVariable Long id,
+                                                          @RequestParam Integer ativo) {
+        DisciplinaDtoOut disciplina = disciplinaService.alterarStatus(id, ativo);
+        return ResponseEntity.ok(disciplina);
     }
 }

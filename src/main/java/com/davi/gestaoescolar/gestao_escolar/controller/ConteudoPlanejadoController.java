@@ -67,35 +67,47 @@ public class ConteudoPlanejadoController {
      * @return ResponseEntity com a lista de conteúdos planejados
      */
     @GetMapping
-    public ResponseEntity<List<ConteudoPlanejadoDtoOut>> listarTodos() {
+    public ResponseEntity<List<ConteudoPlanejadoDtoOut>> listarTodos(
+            @RequestParam(required = false) String conteudo,
+            @RequestParam(required = false) Boolean concluido,
+            @RequestParam(required = false)
+            @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE)
+            java.time.LocalDate dataPrevista,
+            @RequestParam(required = false) Long planejamentoId
+    ) {
         List<ConteudoPlanejadoDtoOut> conteudos = conteudoPlanejadoService.listarTodos();
+
+        if (conteudo != null && !conteudo.trim().isEmpty()) {
+            String termo = conteudo.trim().toLowerCase();
+            conteudos = conteudos.stream()
+                    .filter(c -> c.getConteudo() != null && c.getConteudo().toLowerCase().contains(termo))
+                    .toList();
+        }
+
+        if (concluido != null) {
+            conteudos = conteudos.stream()
+                    .filter(c -> c.getConcluido() != null && c.getConcluido().equals(concluido))
+                    .toList();
+        }
+
+        if (dataPrevista != null) {
+            conteudos = conteudos.stream()
+                    .filter(c -> dataPrevista.equals(c.getDataPrevista()))
+                    .toList();
+        }
+
+        if (planejamentoId != null) {
+            conteudos = conteudos.stream()
+                    .filter(c -> c.getPlanejamento() != null
+                            && c.getPlanejamento().getId() != null
+                            && c.getPlanejamento().getId().equals(planejamentoId))
+                    .toList();
+        }
+
         return ResponseEntity.ok(conteudos);
     }
 
-    /**
-     * Buscar conteúdos planejados por planejamento
-     * 
-     * @param planejamentoId ID do planejamento
-     * @return ResponseEntity com a lista de conteúdos planejados
-     */
-    @GetMapping("/planejamento/{planejamentoId}")
-    public ResponseEntity<List<ConteudoPlanejadoDtoOut>> buscarPorPlanejamento(@PathVariable Long planejamentoId) {
-        List<ConteudoPlanejadoDtoOut> conteudos = conteudoPlanejadoService.buscarPorPlanejamento(planejamentoId);
-        return ResponseEntity.ok(conteudos);
-    }
 
-    /**
-     * Buscar conteúdos planejados por data prevista
-     * 
-     * @param data Data prevista (formato: yyyy-MM-dd)
-     * @return ResponseEntity com a lista de conteúdos planejados
-     */
-    @GetMapping("/data/{data}")
-    public ResponseEntity<List<ConteudoPlanejadoDtoOut>> buscarPorData(@PathVariable String data) {
-        LocalDate dataPrevista = LocalDate.parse(data);
-        List<ConteudoPlanejadoDtoOut> conteudos = conteudoPlanejadoService.buscarPorData(dataPrevista);
-        return ResponseEntity.ok(conteudos);
-    }
 
     /**
      * Buscar conteúdos planejados por turma
@@ -125,5 +137,12 @@ public class ConteudoPlanejadoController {
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
         conteudoPlanejadoService.deletar(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/concluido")
+    public ResponseEntity<ConteudoPlanejadoDtoOut> alterarConclusao(@PathVariable Long id,
+                                                                    @RequestParam Integer concluido) {
+        ConteudoPlanejadoDtoOut atualizado = conteudoPlanejadoService.alterarConclusao(id, concluido);
+        return ResponseEntity.ok(atualizado);
     }
 }

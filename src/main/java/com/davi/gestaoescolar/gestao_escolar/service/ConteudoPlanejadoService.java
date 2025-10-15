@@ -48,17 +48,27 @@ public class ConteudoPlanejadoService {
 
         PlanejamentoDtoOut planejamentoDto = null;
         if (conteudo.getPlanejamento() != null) {
-            Planejamento p = conteudo.getPlanejamento();
-            planejamentoDto = new PlanejamentoDtoOut(
-                p.getId(),
-                p.getDescricao(),
-                p.getSemestre(),
-                p.getAno(),
-                new PlanejamentoDtoOut.DisciplinaDTO(p.getDisciplina().getId(), p.getDisciplina().getNome()),
-                new PlanejamentoDtoOut.TurmaDTO(p.getTurma().getId(), p.getDisciplina().getNome()),
-                p.getDataCriacao(),
-                p.getDataAtualizacao()
-            );
+            try {
+                Planejamento p = conteudo.getPlanejamento();
+                planejamentoDto = new PlanejamentoDtoOut(
+                    p.getId(),
+                    p.getDescricao(),
+                    p.getSemestre(),
+                    p.getAno(),
+                    new PlanejamentoDtoOut.DisciplinaDTO(
+                        p.getDisciplina() != null ? p.getDisciplina().getId() : null,
+                        p.getDisciplina() != null ? p.getDisciplina().getNome() : null
+                    ),
+                    new PlanejamentoDtoOut.TurmaDTO(
+                        p.getTurma() != null ? p.getTurma().getId() : null,
+                        p.getTurma() != null ? p.getTurma().getNome() : null
+                    ),
+                    p.getDataCriacao(),
+                    p.getDataAtualizacao()
+                );
+            } catch (jakarta.persistence.EntityNotFoundException e) {
+                planejamentoDto = null;
+            }
         }
 
         return new ConteudoPlanejadoDtoOut(
@@ -266,5 +276,23 @@ public class ConteudoPlanejadoService {
     private Planejamento buscarPlanejamento(Long planejamentoId) {
         return planejamentoRepository.findById(planejamentoId)
                 .orElseThrow(() -> new ConteudoPlanejadoException.PlanejamentoInvalidoException(planejamentoId));
+    }
+
+    /**
+     * Altera o status de conclusão do conteúdo planejado (0 ou 1)
+     */
+    public ConteudoPlanejadoDtoOut alterarConclusao(Long id, Integer concluido) {
+        if (id == null) {
+            throw new ConteudoPlanejadoException.DadosInvalidosException("ID não pode ser nulo");
+        }
+
+        ConteudoPlanejado conteudo = conteudoPlanejadoRepository.findById(id)
+                .orElseThrow(() -> new ConteudoPlanejadoException.ConteudoPlanejadoNaoEncontradoException(id));
+
+        boolean valor = concluido != null && concluido.equals(1);
+        conteudo.setConcluido(valor);
+
+        ConteudoPlanejado atualizado = conteudoPlanejadoRepository.save(conteudo);
+        return toDTO(atualizado);
     }
 }

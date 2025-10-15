@@ -167,33 +167,20 @@ public class DisciplinaService {
     }
 
     /**
-     * Desativa uma disciplina (soft delete)
+     * Altera o status de ativo da disciplina a partir de 0 ou 1
      */
-    public void desativar(Long id) {
-        if (id == null) {
-            throw new DisciplinaException.DadosInvalidosException("ID não pode ser nulo");
+    public DisciplinaDtoOut alterarStatus(Long id, Integer ativoParam) {
+        if (ativoParam == null || (ativoParam != 0 && ativoParam != 1)) {
+            throw new DisciplinaException.DadosInvalidosException("Parâmetro 'ativo' deve ser 0 ou 1");
         }
-        
-        Disciplina disciplina = disciplinaRepository.findById(id)
-                .orElseThrow(() -> new DisciplinaException.DisciplinaNaoEncontradaException(id));
-        
-        disciplina.setAtivo(false);
-        disciplinaRepository.save(disciplina);
-    }
 
-    /**
-     * Reativa uma disciplina
-     */
-    public void reativar(Long id) {
-        if (id == null) {
-            throw new DisciplinaException.DadosInvalidosException("ID não pode ser nulo");
-        }
-        
         Disciplina disciplina = disciplinaRepository.findById(id)
                 .orElseThrow(() -> new DisciplinaException.DisciplinaNaoEncontradaException(id));
-        
-        disciplina.setAtivo(true);
-        disciplinaRepository.save(disciplina);
+
+        disciplina.setAtivo(ativoParam == 1);
+
+        Disciplina atualizada = disciplinaRepository.save(disciplina);
+        return toDTO(atualizada);
     }
 
     /**

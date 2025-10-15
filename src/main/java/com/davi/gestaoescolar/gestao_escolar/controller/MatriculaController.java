@@ -105,7 +105,7 @@ public class MatriculaController {
 
     // Ativar matrícula
     @PatchMapping("/{id}/ativar")
-    public ResponseEntity<Void> ativarMatricula(@PathVariable Long id) {
+    public ResponseEntity<MatriculaDtoOut> ativarMatricula(@PathVariable Long id) {
         matriculaService.ativar(id);
         return ResponseEntity.ok().build();
     }
@@ -119,7 +119,7 @@ public class MatriculaController {
 
     // Colocar matrícula em processo
     @PatchMapping("/{id}/processo")
-    public ResponseEntity<Void> colocarEmProcesso(@PathVariable Long id) {
+    public ResponseEntity<MatriculaDtoOut> colocarEmProcesso(@PathVariable Long id) {
         matriculaService.colocarEmProcesso(id);
         return ResponseEntity.ok().build();
     }
