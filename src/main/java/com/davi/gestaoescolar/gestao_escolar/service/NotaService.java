@@ -131,7 +131,9 @@ public class NotaService {
         if (alunoId == null) {
             throw new GlobalException.DadosInvalidosException("ID do aluno não pode ser nulo");
         }
-        return toDtos(notaRepository.findByAlunoId(alunoId));
+        return notaRepository.findByAlunoId(alunoId).stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -142,7 +144,9 @@ public class NotaService {
         if (registroAulaId == null) {
             throw new GlobalException.DadosInvalidosException("ID do registro de aula não pode ser nulo");
         }
-        return toDtos(notaRepository.findByRegistroAulaId(registroAulaId));
+        return notaRepository.findByRegistroAulaId(registroAulaId).stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -153,7 +157,9 @@ public class NotaService {
         if (tipo == null) {
             throw new GlobalException.DadosInvalidosException("Tipo de avaliação não pode ser nulo");
         }
-        return toDtos(notaRepository.findByTipo(tipo));
+        return notaRepository.findByTipo(tipo).stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -211,7 +217,9 @@ public class NotaService {
      */
     @Transactional(readOnly = true)
     public List<NotaDtoOut> listarTodas() {
-        return toDtos(notaRepository.findAll());
+        return notaRepository.findAll().stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**

@@ -1,9 +1,9 @@
 package com.davi.gestaoescolar.gestao_escolar.service;
 
-import com.davi.gestaoescolar.gestao_escolar.dto.Disciplina.DisciplinaDtoSimples;
+import com.davi.gestaoescolar.gestao_escolar.dto.Disciplina.DisciplinaDtoOut;
 import com.davi.gestaoescolar.gestao_escolar.dto.Planejamento.PlanejamentoDtoIn;
 import com.davi.gestaoescolar.gestao_escolar.dto.Planejamento.PlanejamentoDtoOut;
-import com.davi.gestaoescolar.gestao_escolar.dto.Turma.TurmaDtoSimples;
+import com.davi.gestaoescolar.gestao_escolar.dto.Turma.TurmaDtoOut;
 import com.davi.gestaoescolar.gestao_escolar.exception.PlanejamentoException;
 import com.davi.gestaoescolar.gestao_escolar.model.Disciplina;
 import com.davi.gestaoescolar.gestao_escolar.model.Planejamento;
@@ -37,14 +37,6 @@ public class PlanejamentoService {
     /**
      * Metodo auxiliares
      */
-    private List<PlanejamentoDtoOut> toDtos (List<Planejamento> planejamentos){
-        return planejamentos.stream()
-                .map(this::toDTO).collect(Collectors.toList());
-    }
-
-    private Optional<PlanejamentoDtoOut> toDTO(Optional<Planejamento> planejamento) {
-        return planejamento.map(this::toDTO);
-    }
 
     private PlanejamentoDtoOut toDTO(Planejamento planejamento){
         return new PlanejamentoDtoOut(
@@ -52,11 +44,11 @@ public class PlanejamentoService {
             planejamento.getDescricao(),
             planejamento.getSemestre(),
             planejamento.getAno(),
-            new DisciplinaDtoSimples(
+            new DisciplinaDtoOut(
                 planejamento.getDisciplina() != null ? planejamento.getDisciplina().getId() : null,
                 planejamento.getDisciplina() != null ? planejamento.getDisciplina().getNome() : null
             ),
-            new TurmaDtoSimples(
+            new TurmaDtoOut(
                 planejamento.getTurma() != null ? planejamento.getTurma().getId() : null, 
                 planejamento.getTurma() != null ? planejamento.getTurma().getNome() : null
             ),
@@ -163,7 +155,8 @@ public class PlanejamentoService {
     public Optional<PlanejamentoDtoOut> buscarPorId(Long id) {
 
 
-        return toDTO(planejamentoRepository.findById(id));
+        return planejamentoRepository.findById(id)
+                .map(this::toDTO);
     }
 
     /**
@@ -176,7 +169,9 @@ public class PlanejamentoService {
         }
         List<Planejamento> planejamento = planejamentoRepository.findByDisciplinaId(disciplinaId);
 
-        return toDtos(planejamento);
+        return planejamento.stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
 
     }
 
@@ -188,7 +183,10 @@ public class PlanejamentoService {
         if (turmaId == null) {
             throw new IllegalArgumentException("ID da turma não pode ser nulo");
         }
-        return toDtos(planejamentoRepository.findByTurmaId(turmaId));
+        return planejamentoRepository.findByTurmaId(turmaId)
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -199,7 +197,10 @@ public class PlanejamentoService {
         if (ano == null) {
             throw new IllegalArgumentException("Ano não pode ser nulo");
         }
-        return toDtos(planejamentoRepository.findByAno(ano));
+        return planejamentoRepository.findByAno(ano)
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -210,7 +211,10 @@ public class PlanejamentoService {
         if (semestre == null || semestre.trim().isEmpty()) {
             throw new IllegalArgumentException("Semestre não pode ser vazio");
         }
-        return toDtos(planejamentoRepository.findBySemestre(semestre.trim()));
+        return planejamentoRepository.findBySemestre(semestre.trim())
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -224,7 +228,10 @@ public class PlanejamentoService {
         if (semestre == null || semestre.trim().isEmpty()) {
             throw new IllegalArgumentException("Semestre não pode ser vazio");
         }
-        return toDtos(planejamentoRepository.findByAnoAndSemestre(ano, semestre.trim()));
+        return planejamentoRepository.findByAnoAndSemestre(ano, semestre.trim())
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -248,10 +255,10 @@ public class PlanejamentoService {
         Optional<Planejamento> planejamento = planejamentoRepository.findByDisciplinaIdAndTurmaIdAndSemestreAndAno(
                 disciplinaId, turmaId, semestre.trim(), ano);
         if(planejamento.isPresent()){
-            return toDTO(planejamento);
+            return Optional.of(toDTO(planejamento.get()));
         }
         
-        return null;
+        return Optional.empty();
     }
 
     /**
@@ -260,7 +267,10 @@ public class PlanejamentoService {
     @Transactional(readOnly = true)
     public List<PlanejamentoDtoOut> listarTodos() {
 
-        return toDtos(planejamentoRepository.findAll());
+        return planejamentoRepository.findAll()
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
