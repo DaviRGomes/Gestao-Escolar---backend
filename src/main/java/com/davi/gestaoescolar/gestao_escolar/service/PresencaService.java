@@ -1,5 +1,9 @@
 package com.davi.gestaoescolar.gestao_escolar.service;
 
+import com.davi.gestaoescolar.gestao_escolar.dto.Aluno.AlunoDtoOut;
+import com.davi.gestaoescolar.gestao_escolar.dto.Presenca.PresencaDtoIn;
+import com.davi.gestaoescolar.gestao_escolar.dto.Presenca.PresencaDtoOut;
+import com.davi.gestaoescolar.gestao_escolar.dto.RegistroAula.RegistroAulaDtoOut;
 import com.davi.gestaoescolar.gestao_escolar.model.Aluno;
 import com.davi.gestaoescolar.gestao_escolar.model.Presenca;
 import com.davi.gestaoescolar.gestao_escolar.model.RegistroAula;
@@ -28,134 +32,178 @@ public class PresencaService {
     @Autowired
     private RegistroAulaRepository registroAulaRepository;
 
+    public PresencaDtoOut toDTO(Presenca presenca) {
+        return new PresencaDtoOut(
+                presenca.getId(),
+                presenca.getPresente(),
+                presenca.getJustificativa(),
+                new AlunoDtoOut(
+                        presenca.getAluno() != null ? presenca.getAluno().getId() : null,
+                        presenca.getAluno() != null ? presenca.getAluno().getNome() : null
+                ),
+                new RegistroAulaDtoOut(
+                        presenca.getRegistroAula() != null ? presenca.getRegistroAula().getId() : null,
+                        presenca.getRegistroAula() != null ? presenca.getRegistroAula().getData() : null,
+                        presenca.getRegistroAula() != null ? presenca.getRegistroAula().getDescricao() : null
+                )
+        );
+    }
+
     /**
      * Salva uma nova presença
      */
-    public Presenca salvar(Presenca presenca) {
-        validarDadosPresenca(presenca);
-        validarAlunoERegistroAula(presenca.getAluno(), presenca.getRegistroAula());
+    public PresencaDtoOut salvar(PresencaDtoIn dtoIn) {
+        validarDadosPresenca(dtoIn);
+        validarAlunoERegistroAula(dtoIn.getAlunoId(), dtoIn.getRegistroAulaId());
         
         // Verifica se já existe presença para este aluno nesta aula
         List<Presenca> presencasExistentes = presencaRepository.findByAlunoIdAndRegistroAulaId(
-            presenca.getAluno().getId(), presenca.getRegistroAula().getId());
+            dtoIn.getAlunoId(), dtoIn.getRegistroAulaId());
         
         if (!presencasExistentes.isEmpty()) {
             throw new RuntimeException("Já existe registro de presença para este aluno nesta aula");
         }
-        
-        return presencaRepository.save(presenca);
+        Aluno aluno = alunoRepository.findById(dtoIn.getAlunoId()).orElse(null);
+        RegistroAula registroAula = registroAulaRepository.findById(dtoIn.getRegistroAulaId()).orElse(null);
+
+        Presenca presenca = new Presenca(
+            dtoIn.getPresente(),
+            dtoIn.getJustificativa(),
+            registroAula,
+            aluno
+        );
+
+       return toDTO(presencaRepository.save(presenca));
     }
 
     /**
      * Atualiza uma presença existente
      */
-    public Presenca atualizar(Long id, Presenca presencaAtualizada) {
+    public PresencaDtoOut atualizar(Long id, PresencaDtoIn presencaAtualizada) {
         Optional<Presenca> presencaExistente = presencaRepository.findById(id);
         if (presencaExistente.isEmpty()) {
             throw new RuntimeException("Presença não encontrada com ID: " + id);
         }
 
         validarDadosPresenca(presencaAtualizada);
-        validarAlunoERegistroAula(presencaAtualizada.getAluno(), presencaAtualizada.getRegistroAula());
+        validarAlunoERegistroAula(presencaAtualizada.getAlunoId(), presencaAtualizada.getRegistroAulaId());
         
         Presenca presenca = presencaExistente.get();
         presenca.setPresente(presencaAtualizada.getPresente());
         presenca.setJustificativa(presencaAtualizada.getJustificativa());
-        presenca.setAluno(presencaAtualizada.getAluno());
-        presenca.setRegistroAula(presencaAtualizada.getRegistroAula());
+        presenca.setAluno(alunoRepository.findById(presencaAtualizada.getAlunoId()).orElse(null));
+        presenca.setRegistroAula(registroAulaRepository.findById(presencaAtualizada.getRegistroAulaId()).orElse(null));
         
-        return presencaRepository.save(presenca);
+        return toDTO(presencaRepository.save(presenca));
     }
 
     /**
      * Busca presença por ID
      */
     @Transactional(readOnly = true)
-    public Optional<Presenca> buscarPorId(Long id) {
-        return presencaRepository.findById(id);
+    public Optional<PresencaDtoOut> buscarPorId(Long id) {
+        Optional<Presenca> presenca = presencaRepository.findById(id);
+        return presenca.map(this::toDTO);
     }
 
     /**
      * Busca presenças por aluno
      */
     @Transactional(readOnly = true)
-    public List<Presenca> buscarPorAluno(Long alunoId) {
+    public List<PresencaDtoOut> buscarPorAluno(Long alunoId) {
         if (alunoId == null) {
             throw new IllegalArgumentException("ID do aluno não pode ser nulo");
         }
-        return presencaRepository.findByAlunoId(alunoId);
+        return presencaRepository.
+                findByAlunoId(alunoId).
+                stream().map(this::toDTO).
+                toList();
     }
 
     /**
      * Busca presenças por registro de aula
      */
     @Transactional(readOnly = true)
-    public List<Presenca> buscarPorRegistroAula(Long registroAulaId) {
+    public List<PresencaDtoOut> buscarPorRegistroAula(Long registroAulaId) {
+
         if (registroAulaId == null) {
             throw new IllegalArgumentException("ID do registro de aula não pode ser nulo");
         }
-        return presencaRepository.findByRegistroAulaId(registroAulaId);
+        return presencaRepository.
+                findByRegistroAulaId(registroAulaId).
+                stream().map(this::toDTO).
+                toList();
     }
 
     /**
      * Busca presenças por status (presente/ausente)
      */
     @Transactional(readOnly = true)
-    public List<Presenca> buscarPorStatus(Boolean presente) {
+    public List<PresencaDtoOut> buscarPorStatus(Boolean presente) {
         if (presente == null) {
             throw new IllegalArgumentException("Status de presença não pode ser nulo");
         }
-        return presencaRepository.findByPresente(presente);
+        return presencaRepository.findByPresente(presente).
+                stream().map(this::toDTO).
+                toList();
     }
 
     /**
      * Busca presenças de um aluno por status
      */
     @Transactional(readOnly = true)
-    public List<Presenca> buscarPorAlunoEStatus(Long alunoId, Boolean presente) {
+    public List<PresencaDtoOut> buscarPorAlunoEStatus(Long alunoId, Boolean presente) {
         if (alunoId == null) {
             throw new IllegalArgumentException("ID do aluno não pode ser nulo");
         }
         if (presente == null) {
             throw new IllegalArgumentException("Status de presença não pode ser nulo");
         }
-        return presencaRepository.findByAlunoIdAndPresente(alunoId, presente);
+        return presencaRepository.findByAlunoIdAndPresente(alunoId, presente).
+                stream().map(this::toDTO).
+                toList();
     }
 
     /**
      * Busca presenças de uma aula por status
      */
     @Transactional(readOnly = true)
-    public List<Presenca> buscarPorRegistroAulaEStatus(Long registroAulaId, Boolean presente) {
+    public List<PresencaDtoOut> buscarPorRegistroAulaEStatus(Long registroAulaId, Boolean presente) {
         if (registroAulaId == null) {
             throw new IllegalArgumentException("ID do registro de aula não pode ser nulo");
         }
         if (presente == null) {
             throw new IllegalArgumentException("Status de presença não pode ser nulo");
         }
-        return presencaRepository.findByRegistroAulaIdAndPresente(registroAulaId, presente);
+        return presencaRepository.findByRegistroAulaIdAndPresente(registroAulaId, presente).
+                stream().map(this::toDTO).
+                toList();
     }
 
     /**
      * Busca presença específica de um aluno em uma aula
      */
     @Transactional(readOnly = true)
-    public List<Presenca> buscarPorAlunoERegistroAula(Long alunoId, Long registroAulaId) {
+    public List<PresencaDtoOut> buscarPorAlunoERegistroAula(Long alunoId, Long registroAulaId) {
         if (alunoId == null) {
             throw new IllegalArgumentException("ID do aluno não pode ser nulo");
         }
         if (registroAulaId == null) {
             throw new IllegalArgumentException("ID do registro de aula não pode ser nulo");
         }
-        return presencaRepository.findByAlunoIdAndRegistroAulaId(alunoId, registroAulaId);
+        return presencaRepository.findByAlunoIdAndRegistroAulaId(alunoId, registroAulaId).
+                stream().map(this::toDTO).
+                toList();
     }
 
     /**
      * Lista todas as presenças
      */
     @Transactional(readOnly = true)
-    public List<Presenca> listarTodas() {
-        return presencaRepository.findAll();
+    public List<PresencaDtoOut> listarTodas() {
+        return presencaRepository.findAll().
+                stream().map(this::toDTO).
+                toList();
     }
 
     /**
@@ -163,7 +211,7 @@ public class PresencaService {
      */
     @Transactional(readOnly = true)
     public BigDecimal calcularFrequenciaAluno(Long alunoId) {
-        List<Presenca> todasPresencas = buscarPorAluno(alunoId);
+        List<PresencaDtoOut> todasPresencas = buscarPorAluno(alunoId);  
         
         if (todasPresencas.isEmpty()) {
             return BigDecimal.ZERO;
@@ -185,7 +233,7 @@ public class PresencaService {
      */
     @Transactional(readOnly = true)
     public BigDecimal calcularFrequenciaTurma(Long registroAulaId) {
-        List<Presenca> presencasAula = buscarPorRegistroAula(registroAulaId);
+        List<PresencaDtoOut> presencasAula = buscarPorRegistroAula(registroAulaId);
         
         if (presencasAula.isEmpty()) {
             return BigDecimal.ZERO;
@@ -236,36 +284,6 @@ public class PresencaService {
     }
 
     /**
-     * Marca presença de um aluno
-     */
-    public Presenca marcarPresenca(Long alunoId, Long registroAulaId) {
-        return criarPresencaBasica(alunoId, registroAulaId, true, null);
-    }
-
-    /**
-     * Marca falta de um aluno
-     */
-    public Presenca marcarFalta(Long alunoId, Long registroAulaId, String justificativa) {
-        return criarPresencaBasica(alunoId, registroAulaId, false, justificativa);
-    }
-
-    /**
-     * Altera status de presença
-     */
-    public Presenca alterarStatusPresenca(Long presencaId, Boolean novoStatus, String justificativa) {
-        Optional<Presenca> presencaExistente = presencaRepository.findById(presencaId);
-        if (presencaExistente.isEmpty()) {
-            throw new RuntimeException("Presença não encontrada com ID: " + presencaId);
-        }
-        
-        Presenca presenca = presencaExistente.get();
-        presenca.setPresente(novoStatus);
-        presenca.setJustificativa(justificativa);
-        
-        return presencaRepository.save(presenca);
-    }
-
-    /**
      * Deleta uma presença permanentemente
      */
     public void deletar(Long id) {
@@ -273,29 +291,6 @@ public class PresencaService {
             throw new RuntimeException("Presença não encontrada com ID: " + id);
         }
         presencaRepository.deleteById(id);
-    }
-
-    /**
-     * Cria uma presença básica
-     */
-    public Presenca criarPresencaBasica(Long alunoId, Long registroAulaId, Boolean presente, String justificativa) {
-        Optional<Aluno> aluno = alunoRepository.findById(alunoId);
-        if (aluno.isEmpty()) {
-            throw new RuntimeException("Aluno não encontrado com ID: " + alunoId);
-        }
-        
-        Optional<RegistroAula> registroAula = registroAulaRepository.findById(registroAulaId);
-        if (registroAula.isEmpty()) {
-            throw new RuntimeException("Registro de aula não encontrado com ID: " + registroAulaId);
-        }
-        
-        Presenca presenca = new Presenca();
-        presenca.setAluno(aluno.get());
-        presenca.setRegistroAula(registroAula.get());
-        presenca.setPresente(presente);
-        presenca.setJustificativa(justificativa);
-        
-        return salvar(presenca);
     }
 
     /**
@@ -338,31 +333,31 @@ public class PresencaService {
     /**
      * Valida os dados da presença
      */
-    private void validarDadosPresenca(Presenca presenca) {
-        if (presenca == null) {
+    private void validarDadosPresenca(PresencaDtoIn dtoIn) {
+        if (dtoIn == null) {
             throw new IllegalArgumentException("Presença não pode ser nula");
         }
         
-        if (presenca.getPresente() == null) {
+        if (dtoIn.getPresente() == null) {
             throw new IllegalArgumentException("Status de presença é obrigatório");
         }
         
-        if (presenca.getAluno() == null || presenca.getAluno().getId() == null) {
+        if (dtoIn.getAlunoId() == null) {
             throw new IllegalArgumentException("Aluno é obrigatório");
         }
         
-        if (presenca.getRegistroAula() == null || presenca.getRegistroAula().getId() == null) {
+        if (dtoIn.getRegistroAulaId() == null) {
             throw new IllegalArgumentException("Registro de aula é obrigatório");
         }
         
         // Validação da justificativa para faltas
-        if (!presenca.getPresente() && 
-            (presenca.getJustificativa() == null || presenca.getJustificativa().trim().isEmpty())) {
+        if (!dtoIn.getPresente() && 
+            (dtoIn.getJustificativa() == null || dtoIn.getJustificativa().trim().isEmpty())) {
             // Justificativa não é obrigatória, mas recomendada para faltas
         }
         
         // Validação do tamanho da justificativa
-        if (presenca.getJustificativa() != null && presenca.getJustificativa().length() > 500) {
+        if (dtoIn.getJustificativa() != null && dtoIn.getJustificativa().length() > 500) {
             throw new IllegalArgumentException("Justificativa não pode exceder 500 caracteres");
         }
     }
@@ -370,19 +365,19 @@ public class PresencaService {
     /**
      * Valida se aluno e registro de aula existem e estão ativos
      */
-    private void validarAlunoERegistroAula(Aluno aluno, RegistroAula registroAula) {
-        Optional<Aluno> alunoExistente = alunoRepository.findById(aluno.getId());
+    private void validarAlunoERegistroAula(long alunoId, long  registroAulaId) {
+        Optional<Aluno> alunoExistente = alunoRepository.findById(alunoId);
         if (alunoExistente.isEmpty()) {
-            throw new RuntimeException("Aluno não encontrado com ID: " + aluno.getId());
+            throw new RuntimeException("Aluno não encontrado com ID: " + alunoId);
         }
         
         if (!alunoExistente.get().getAtivo()) {
             throw new RuntimeException("Não é possível registrar presença para um aluno inativo");
         }
         
-        Optional<RegistroAula> registroExistente = registroAulaRepository.findById(registroAula.getId());
+        Optional<RegistroAula> registroExistente = registroAulaRepository.findById(registroAulaId);
         if (registroExistente.isEmpty()) {
-            throw new RuntimeException("Registro de aula não encontrado com ID: " + registroAula.getId());
+            throw new RuntimeException("Registro de aula não encontrado com ID: " + registroAulaId);
         }
         
         // Verifica se o aluno está matriculado na turma do registro de aula

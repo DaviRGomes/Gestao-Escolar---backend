@@ -1,5 +1,10 @@
 package com.davi.gestaoescolar.gestao_escolar.service;
 
+import com.davi.gestaoescolar.gestao_escolar.dto.RegistroAula.RegistroAulaDtoIn;
+import com.davi.gestaoescolar.gestao_escolar.dto.RegistroAula.RegistroAulaDtoOut;
+import com.davi.gestaoescolar.gestao_escolar.dto.Disciplina.DisciplinaDtoOut;
+import com.davi.gestaoescolar.gestao_escolar.dto.Turma.TurmaDtoOut;
+import com.davi.gestaoescolar.gestao_escolar.dto.ConteudoPlanejado.ConteudoPlanejadoDtoOut;
 import com.davi.gestaoescolar.gestao_escolar.model.Disciplina;
 import com.davi.gestaoescolar.gestao_escolar.model.RegistroAula;
 import com.davi.gestaoescolar.gestao_escolar.model.Turma;
@@ -26,20 +31,77 @@ public class RegistroAulaService {
     
     @Autowired
     private DisciplinaRepository disciplinaRepository;
+    
+    public RegistroAulaDtoOut toDto(RegistroAula registroAula) {
+        TurmaDtoOut turmaDto = null;
+        if (registroAula.getTurma() != null) {
+            turmaDto = new TurmaDtoOut(
+                registroAula.getTurma().getId(),
+                registroAula.getTurma().getNome()
+            );
+        }
+
+        DisciplinaDtoOut disciplinaDto = null;
+        if (registroAula.getDisciplina() != null) {
+            disciplinaDto = new DisciplinaDtoOut(
+                registroAula.getDisciplina().getId(),
+                registroAula.getDisciplina().getNome()
+            );
+        }
+
+        ConteudoPlanejadoDtoOut conteudoDto = null;
+        if (registroAula.getConteudoPlanejado() != null) {
+            conteudoDto = new ConteudoPlanejadoDtoOut(
+                registroAula.getConteudoPlanejado().getId(),
+                registroAula.getConteudoPlanejado().getConteudo(),
+                registroAula.getConteudoPlanejado().getDataPrevista()
+            );
+        }
+
+        return new RegistroAulaDtoOut(
+            registroAula.getId(),
+            registroAula.getData(),
+            registroAula.getDescricao(),
+            registroAula.getObservacoes(),
+            disciplinaDto,
+            turmaDto,
+            conteudoDto
+        );
+    }
 
     /**
      * Salva um novo registro de aula
      */
-    public RegistroAula salvar(RegistroAula registroAula) {
-        validarDadosRegistroAula(registroAula);
-        validarTurmaEDisciplina(registroAula.getTurma(), registroAula.getDisciplina());
+    public RegistroAulaDtoOut salvar(RegistroAulaDtoIn dtoIn) {
+        validarDadosRegistroAula(dtoIn);
+        validarTurmaEDisciplina(dtoIn.getTurmaId(), dtoIn.getDisciplinaId());
+
+        Turma turma = turmaRepository.findById(dtoIn.getTurmaId()).
+            orElseThrow(() -> new RuntimeException("Turma não encontrada com ID: " + dtoIn.getTurmaId()));
+
+        Disciplina disciplina = disciplinaRepository.findById(dtoIn.getDisciplinaId()).
+            orElseThrow(() -> new RuntimeException("Disciplina não encontrada com ID: " + dtoIn.getDisciplinaId()));
+        
+
+        ConteudoPlanejado conteudoPlanejado = conteudoPlanejadoRepository.findById(dtoIn.getConteudoPlanejadoId()).
+            orElseThrow(() -> new RuntimeException("Conteúdo planejado não encontrado com ID: " + dtoIn.getConteudoPlanejadoId()));
         
         // Define a data como hoje se não foi informada
-        if (registroAula.getData() == null) {
-            registroAula.setData(LocalDate.now());
+        if (dtoIn.getData() == null) {
+            dtoIn.setData(LocalDate.now());
         }
+       
+        RegistroAula registroAula = new RegistroAula(
+            dtoIn.getData(),
+            dtoIn.getDescricao(),
+            dtoIn.getObservacoes(),
+            turma,
+            disciplina,
+            conteudoPlanejado
+          
+        );
         
-        return registroAulaRepository.save(registroAula);
+        return toDto(registroAulaRepository.save(registroAula));
     }
 
     /**
@@ -253,35 +315,35 @@ public class RegistroAulaService {
     /**
      * Valida os dados do registro de aula
      */
-    private void validarDadosRegistroAula(RegistroAula registroAula) {
-        if (registroAula == null) {
+    private void validarDadosRegistroAula(RegistroAulaDtoIn dtoIn) {
+        if (dtoIn == null) {
             throw new IllegalArgumentException("Registro de aula não pode ser nulo");
         }
         
-        if (registroAula.getDescricao() == null || registroAula.getDescricao().trim().isEmpty()) {
-            throw new IllegalArgumentException("Descrição da aula é obrigatória");
+        if (dtoIn.getConteudoMinistrado() == null || dtoIn.getConteudoMinistrado().trim().isEmpty()) {
+            throw new IllegalArgumentException("Conteúdo ministrado é obrigatório");
         }
         
-        if (registroAula.getTurma() == null || registroAula.getTurma().getId() == null) {
+        if (dtoIn.getTurmaId() == null) {
             throw new IllegalArgumentException("Turma é obrigatória");
         }
         
-        if (registroAula.getDisciplina() == null || registroAula.getDisciplina().getId() == null) {
+        if (dtoIn.getDisciplinaId() == null) {
             throw new IllegalArgumentException("Disciplina é obrigatória");
         }
         
         // Validação da data (não pode ser muito futura)
-        if (registroAula.getData() != null && registroAula.getData().isAfter(LocalDate.now().plusDays(30))) {
+        if (dtoIn.getData() != null && dtoIn.getData().isAfter(LocalDate.now().plusDays(30))) {
             throw new IllegalArgumentException("Data da aula não pode ser mais de 30 dias no futuro");
         }
         
         // Validação do tamanho da descrição
-        if (registroAula.getDescricao().length() > 1000) {
-            throw new IllegalArgumentException("Descrição não pode exceder 1000 caracteres");
+        if (dtoIn.getConteudoMinistrado().length() > 1000) {
+            throw new IllegalArgumentException("Conteúdo ministrado não pode exceder 1000 caracteres");
         }
         
         // Validação do tamanho das observações (se fornecidas)
-        if (registroAula.getObservacoes() != null && registroAula.getObservacoes().length() > 500) {
+        if (dtoIn.getObservacoes() != null && dtoIn.getObservacoes().length() > 500) {
             throw new IllegalArgumentException("Observações não podem exceder 500 caracteres");
         }
     }
@@ -289,19 +351,19 @@ public class RegistroAulaService {
     /**
      * Valida se turma e disciplina existem e estão ativas
      */
-    private void validarTurmaEDisciplina(Turma turma, Disciplina disciplina) {
-        Optional<Turma> turmaExistente = turmaRepository.findById(turma.getId());
+    private void validarTurmaEDisciplina(Long turmaId, Long disciplinaId) {
+        Optional<Turma> turmaExistente = turmaRepository.findById(turmaId);
         if (turmaExistente.isEmpty()) {
-            throw new RuntimeException("Turma não encontrada com ID: " + turma.getId());
+            throw new RuntimeException("Turma não encontrada com ID: " + turmaId);
         }
         
         if (!turmaExistente.get().getAtivo()) {
             throw new RuntimeException("Não é possível registrar aula para uma turma inativa");
         }
         
-        Optional<Disciplina> disciplinaExistente = disciplinaRepository.findById(disciplina.getId());
+        Optional<Disciplina> disciplinaExistente = disciplinaRepository.findById(disciplinaId);
         if (disciplinaExistente.isEmpty()) {
-            throw new RuntimeException("Disciplina não encontrada com ID: " + disciplina.getId());
+            throw new RuntimeException("Disciplina não encontrada com ID: " + disciplinaId);    
         }
         
         if (!disciplinaExistente.get().getAtivo()) {
@@ -310,7 +372,7 @@ public class RegistroAulaService {
         
         // Verifica se a disciplina está associada à turma
         boolean disciplinaAssociadaATurma = turmaExistente.get().getDisciplinas().stream()
-            .anyMatch(d -> d.getId().equals(disciplina.getId()));
+            .anyMatch(d -> d.getId().equals(disciplinaId));
         
         if (!disciplinaAssociadaATurma) {
             throw new RuntimeException("A disciplina não está associada à turma informada");

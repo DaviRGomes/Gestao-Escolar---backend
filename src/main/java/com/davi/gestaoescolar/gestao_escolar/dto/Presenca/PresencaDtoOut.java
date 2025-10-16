@@ -19,7 +19,7 @@ public class PresencaDtoOut {
     
     // Construtor com parâmetros
     public PresencaDtoOut(Long id, Boolean presente, String justificativa, 
-                         RegistroAulaDtoOut registroAula, AlunoDtoOut aluno) {
+                         AlunoDtoOut aluno, RegistroAulaDtoOut registroAula) {
         this.id = id;
         this.presente = presente;
         this.justificativa = justificativa;

@@ -1,6 +1,5 @@
 package com.davi.gestaoescolar.gestao_escolar.controller;
 
-import com.davi.gestaoescolar.gestao_escolar.model.Presenca;
 import com.davi.gestaoescolar.gestao_escolar.service.PresencaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -10,6 +9,9 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+
+import com.davi.gestaoescolar.gestao_escolar.dto.Presenca.PresencaDtoIn;
+import com.davi.gestaoescolar.gestao_escolar.dto.Presenca.PresencaDtoOut;
 
 @RestController
 @RequestMapping("/api/presencas")
@@ -22,130 +24,90 @@ public class PresencaController {
      * Salvar nova presença
      */
     @PostMapping
-    public ResponseEntity<Presenca> salvar(@RequestBody Presenca presenca) {
-        try {
-            Presenca novaPresenca = presencaService.salvar(presenca);
-            return new ResponseEntity<>(novaPresenca, HttpStatus.CREATED);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<PresencaDtoOut> salvar(@RequestBody PresencaDtoIn presenca) {
+       PresencaDtoOut novaPresenca = presencaService.salvar(presenca);
+       return ResponseEntity.ok(novaPresenca);
     }
 
     /**
      * Atualizar presença existente
      */
     @PutMapping("/{id}")
-    public ResponseEntity<Presenca> atualizar(@PathVariable Long id, @RequestBody Presenca presenca) {
-        try {
-            Presenca presencaAtualizada = presencaService.atualizar(id, presenca);
-            return new ResponseEntity<>(presencaAtualizada, HttpStatus.OK);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<PresencaDtoOut> atualizar(@PathVariable Long id, @RequestBody PresencaDtoIn presenca) {
+        PresencaDtoOut presencaAtualizada = presencaService.atualizar(id, presenca);
+        return ResponseEntity.ok(presencaAtualizada);
     }
 
     /**
      * Buscar presença por ID
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Presenca> buscarPorId(@PathVariable Long id) {
-        Optional<Presenca> presenca = presencaService.buscarPorId(id);
-        if (presenca.isPresent()) {
-            return new ResponseEntity<>(presenca.get(), HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
-        }
+    public ResponseEntity<Optional<PresencaDtoOut>> buscarPorId(@PathVariable Long id) {
+        Optional<PresencaDtoOut> presenca = presencaService.buscarPorId(id);
+        return ResponseEntity.ok(presenca);
     }
 
     /**
      * Listar todas as presenças
      */
     @GetMapping
-    public ResponseEntity<List<Presenca>> listarTodas() {
-        List<Presenca> presencas = presencaService.listarTodas();
-        return new ResponseEntity<>(presencas, HttpStatus.OK);
+    public ResponseEntity<List<PresencaDtoOut>> listarTodas() {
+        List<PresencaDtoOut> presencas = presencaService.listarTodas();
+        return ResponseEntity.ok(presencas);
     }
 
     /**
      * Buscar presenças por aluno
      */
     @GetMapping("/aluno/{alunoId}")
-    public ResponseEntity<List<Presenca>> buscarPorAluno(@PathVariable Long alunoId) {
-        try {
-            List<Presenca> presencas = presencaService.buscarPorAluno(alunoId);
-            return new ResponseEntity<>(presencas, HttpStatus.OK);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        }
+    public ResponseEntity<List<PresencaDtoOut>> buscarPorAluno(@PathVariable Long alunoId) {
+        List<PresencaDtoOut> presencas = presencaService.buscarPorAluno(alunoId);
+        return ResponseEntity.ok(presencas);
     }
 
     /**
      * Buscar presenças por registro de aula
      */
     @GetMapping("/aula/{registroAulaId}")
-    public ResponseEntity<List<Presenca>> buscarPorRegistroAula(@PathVariable Long registroAulaId) {
-        try {
-            List<Presenca> presencas = presencaService.buscarPorRegistroAula(registroAulaId);
-            return new ResponseEntity<>(presencas, HttpStatus.OK);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        }
+    public ResponseEntity<List<PresencaDtoOut>> buscarPorRegistroAula(@PathVariable Long registroAulaId) {
+        List<PresencaDtoOut> presencas = presencaService.buscarPorRegistroAula(registroAulaId);
+        return ResponseEntity.ok(presencas);
     }
 
     /**
      * Buscar presenças por status (presente/ausente)
      */
     @GetMapping("/status/{presente}")
-    public ResponseEntity<List<Presenca>> buscarPorStatus(@PathVariable Boolean presente) {
-        try {
-            List<Presenca> presencas = presencaService.buscarPorStatus(presente);
-            return new ResponseEntity<>(presencas, HttpStatus.OK);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        }
+    public ResponseEntity<List<PresencaDtoOut>> buscarPorStatus(@PathVariable Boolean presente) {
+        List<PresencaDtoOut> presencas = presencaService.buscarPorStatus(presente);
+        return ResponseEntity.ok(presencas);
     }
 
     /**
      * Buscar presenças de um aluno por status
      */
     @GetMapping("/aluno/{alunoId}/status/{presente}")
-    public ResponseEntity<List<Presenca>> buscarPorAlunoEStatus(@PathVariable Long alunoId, @PathVariable Boolean presente) {
-        try {
-            List<Presenca> presencas = presencaService.buscarPorAlunoEStatus(alunoId, presente);
-            return new ResponseEntity<>(presencas, HttpStatus.OK);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        }
+    public ResponseEntity<List<PresencaDtoOut>> buscarPorAlunoEStatus(@PathVariable Long alunoId, @PathVariable Boolean presente) {
+        List<PresencaDtoOut> presencas = presencaService.buscarPorAlunoEStatus(alunoId, presente);
+        return ResponseEntity.ok(presencas);
     }
 
     /**
      * Buscar presenças de uma aula por status
      */
     @GetMapping("/aula/{registroAulaId}/status/{presente}")
-    public ResponseEntity<List<Presenca>> buscarPorRegistroAulaEStatus(@PathVariable Long registroAulaId, @PathVariable Boolean presente) {
-        try {
-            List<Presenca> presencas = presencaService.buscarPorRegistroAulaEStatus(registroAulaId, presente);
-            return new ResponseEntity<>(presencas, HttpStatus.OK);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        }
+    public ResponseEntity<List<PresencaDtoOut>> buscarPorRegistroAulaEStatus(@PathVariable Long registroAulaId, @PathVariable Boolean presente) {
+        List<PresencaDtoOut> presencas = presencaService.buscarPorRegistroAulaEStatus(registroAulaId, presente);
+        return ResponseEntity.ok(presencas);
     }
 
     /**
      * Buscar presença específica de um aluno em uma aula
      */
     @GetMapping("/aluno/{alunoId}/aula/{registroAulaId}")
-    public ResponseEntity<List<Presenca>> buscarPorAlunoERegistroAula(@PathVariable Long alunoId, @PathVariable Long registroAulaId) {
-        try {
-            List<Presenca> presencas = presencaService.buscarPorAlunoERegistroAula(alunoId, registroAulaId);
-            return new ResponseEntity<>(presencas, HttpStatus.OK);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        }
+    public ResponseEntity<List<PresencaDtoOut>> buscarPorAlunoERegistroAula(@PathVariable Long alunoId, @PathVariable Long registroAulaId) {
+        List<PresencaDtoOut> presencas = presencaService.buscarPorAlunoERegistroAula(alunoId, registroAulaId);
+        return ResponseEntity.ok(presencas);
     }
 
     /**
@@ -153,12 +115,8 @@ public class PresencaController {
      */
     @GetMapping("/frequencia/aluno/{alunoId}")
     public ResponseEntity<BigDecimal> calcularFrequenciaAluno(@PathVariable Long alunoId) {
-        try {
-            BigDecimal frequencia = presencaService.calcularFrequenciaAluno(alunoId);
-            return new ResponseEntity<>(frequencia, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        }
+        BigDecimal frequencia = presencaService.calcularFrequenciaAluno(alunoId);
+        return ResponseEntity.ok(frequencia);
     }
 
     /**
@@ -166,12 +124,8 @@ public class PresencaController {
      */
     @GetMapping("/contador/presencas/aluno/{alunoId}")
     public ResponseEntity<Long> contarPresencasAluno(@PathVariable Long alunoId) {
-        try {
-            long presencas = presencaService.contarPresencasAluno(alunoId);
-            return new ResponseEntity<>(presencas, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        }
+        long presencas = presencaService.contarPresencasAluno(alunoId);
+        return ResponseEntity.ok(presencas);
     }
 
     /**
@@ -179,12 +133,8 @@ public class PresencaController {
      */
     @GetMapping("/contador/faltas/aluno/{alunoId}")
     public ResponseEntity<Long> contarFaltasAluno(@PathVariable Long alunoId) {
-        try {
-            long faltas = presencaService.contarFaltasAluno(alunoId);
-            return new ResponseEntity<>(faltas, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        }
+        long faltas = presencaService.contarFaltasAluno(alunoId);
+        return ResponseEntity.ok(faltas);
     }
 
     /**
@@ -192,12 +142,8 @@ public class PresencaController {
      */
     @GetMapping("/contador/aulas/aluno/{alunoId}")
     public ResponseEntity<Long> contarTotalAulasAluno(@PathVariable Long alunoId) {
-        try {
-            long totalAulas = presencaService.contarTotalAulasAluno(alunoId);
-            return new ResponseEntity<>(totalAulas, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        }
+        long totalAulas = presencaService.contarTotalAulasAluno(alunoId);
+        return ResponseEntity.ok(totalAulas);
     }
 
     /**
@@ -205,42 +151,28 @@ public class PresencaController {
      */
     @GetMapping("/frequencia-minima/aluno/{alunoId}")
     public ResponseEntity<Boolean> verificarFrequenciaMinima(@PathVariable Long alunoId) {
-        try {
-            boolean temFrequenciaMinima = presencaService.verificarFrequenciaMinima(alunoId);
-            return new ResponseEntity<>(temFrequenciaMinima, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        }
+        boolean temFrequenciaMinima = presencaService.verificarFrequenciaMinima(alunoId);
+        return ResponseEntity.ok(temFrequenciaMinima);
     }
 
     /**
      * Registrar presença de um aluno (presente ou ausente)
      */
     @PostMapping("/aluno/{alunoId}/aula/{registroAulaId}")
-    public ResponseEntity<Presenca> registrarPresencaAluno(@PathVariable Long alunoId, @PathVariable Long registroAulaId, @RequestParam Boolean presente, @RequestParam(required = false) String justificativa) {
-        try {
-            Presenca presenca = presencaService.criarPresencaBasica(alunoId, registroAulaId, presente, justificativa);
-            return new ResponseEntity<>(presenca, HttpStatus.CREATED);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<PresencaDtoOut> registrarPresencaAluno(@PathVariable Long alunoId, @PathVariable Long registroAulaId, @RequestParam Boolean presente, @RequestParam(required = false) String justificativa) {
+        PresencaDtoIn dto = new PresencaDtoIn(presente, justificativa, registroAulaId, alunoId);
+        PresencaDtoOut presenca = presencaService.salvar(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(presenca);
     }
 
     /**
      * Alterar status de presença
      */
     @PatchMapping("/alterar-status/{presencaId}")
-    public ResponseEntity<Presenca> alterarStatusPresenca(@PathVariable Long presencaId, @RequestParam Boolean novoStatus, @RequestParam(required = false) String justificativa) {
-        try {
-            Presenca presenca = presencaService.alterarStatusPresenca(presencaId, novoStatus, justificativa);
-            return new ResponseEntity<>(presenca, HttpStatus.OK);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<PresencaDtoOut> alterarStatusPresenca(@PathVariable Long presencaId, @RequestParam Boolean novoStatus, @RequestParam(required = false) String justificativa) {
+        PresencaDtoIn dto = new PresencaDtoIn(novoStatus, justificativa, null, null);
+        PresencaDtoOut presenca = presencaService.atualizar(presencaId, dto);
+        return ResponseEntity.ok(presenca);
     }
 
     /**
@@ -248,12 +180,8 @@ public class PresencaController {
      */
     @GetMapping("/baixa-frequencia")
     public ResponseEntity<List<Long>> buscarAlunosComBaixaFrequencia() {
-        try {
-            List<Long> alunosIds = presencaService.buscarAlunosComBaixaFrequencia();
-            return new ResponseEntity<>(alunosIds, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        List<Long> alunosIds = presencaService.buscarAlunosComBaixaFrequencia();
+        return ResponseEntity.ok(alunosIds);
     }
 
     /**
@@ -261,12 +189,8 @@ public class PresencaController {
      */
     @GetMapping("/relatorio/aluno/{alunoId}")
     public ResponseEntity<String> gerarRelatorioFrequencia(@PathVariable Long alunoId) {
-        try {
-            String relatorio = presencaService.gerarRelatorioFrequencia(alunoId);
-            return new ResponseEntity<>(relatorio, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        }
+        String relatorio = presencaService.gerarRelatorioFrequencia(alunoId);
+        return ResponseEntity.ok(relatorio);
     }
 
     /**
@@ -274,13 +198,7 @@ public class PresencaController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
-        try {
-            presencaService.deletar(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        presencaService.deletar(id);
+        return ResponseEntity.noContent().build();
     }
 }

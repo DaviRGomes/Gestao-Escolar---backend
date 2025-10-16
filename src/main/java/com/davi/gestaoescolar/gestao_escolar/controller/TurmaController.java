@@ -4,7 +4,6 @@ import com.davi.gestaoescolar.gestao_escolar.model.Turma;
 import com.davi.gestaoescolar.gestao_escolar.model.enums.Periodo;
 import com.davi.gestaoescolar.gestao_escolar.service.TurmaService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,14 +22,8 @@ public class TurmaController {
      */
     @PostMapping
     public ResponseEntity<Turma> criarTurma(@RequestBody Turma turma) {
-        try {
-            Turma novaTurma = turmaService.salvar(turma);
-            return new ResponseEntity<>(novaTurma, HttpStatus.CREATED);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        Turma novaTurma = turmaService.salvar(turma);
+        return ResponseEntity.ok(novaTurma);
     }
 
     /**
@@ -38,30 +31,17 @@ public class TurmaController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<Turma> atualizarTurma(@PathVariable Long id, @RequestBody Turma turma) {
-        try {
-            Turma turmaAtualizada = turmaService.atualizar(id, turma);
-            return new ResponseEntity<>(turmaAtualizada, HttpStatus.OK);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        Turma turmaAtualizada = turmaService.atualizar(id, turma);
+        return ResponseEntity.ok(turmaAtualizada);
     }
 
     /**
      * Buscar turma por ID
      */
     @GetMapping("/id/{id}")
-    public ResponseEntity<Turma> buscarPorId(@PathVariable Long id) {
-        try {
-            Optional<Turma> turma = turmaService.buscarPorId(id);
-            return turma.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                    .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<Optional<Turma>> buscarPorId(@PathVariable Long id) {
+        Optional<Turma> turma = turmaService.buscarPorId(id);
+        return ResponseEntity.ok(turma);
     }
 
     /**
@@ -69,14 +49,8 @@ public class TurmaController {
      */
     @GetMapping("/nome/{nome}")
     public ResponseEntity<List<Turma>> buscarPorNome(@PathVariable String nome) {
-        try {
-            List<Turma> turmas = turmaService.buscarPorNome(nome);
-            return new ResponseEntity<>(turmas, HttpStatus.OK);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        List<Turma> turmas = turmaService.buscarPorNome(nome);
+        return ResponseEntity.ok(turmas);
     }
 
     /**
@@ -84,14 +58,8 @@ public class TurmaController {
      */
     @GetMapping("/ano/{anoLetivo}")
     public ResponseEntity<List<Turma>> buscarPorAnoLetivo(@PathVariable String anoLetivo) {
-        try {
-            List<Turma> turmas = turmaService.buscarPorAnoLetivo(anoLetivo);
-            return new ResponseEntity<>(turmas, HttpStatus.OK);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        List<Turma> turmas = turmaService.buscarPorAnoLetivo(anoLetivo);
+        return ResponseEntity.ok(turmas);
     }
 
     /**
@@ -99,14 +67,8 @@ public class TurmaController {
      */
     @GetMapping("/semestre/{semestre}")
     public ResponseEntity<List<Turma>> buscarPorSemestre(@PathVariable String semestre) {
-        try {
-            List<Turma> turmas = turmaService.buscarPorSemestre(semestre);
-            return new ResponseEntity<>(turmas, HttpStatus.OK);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        List<Turma> turmas = turmaService.buscarPorSemestre(semestre);
+        return ResponseEntity.ok(turmas);
     }
 
     /**
@@ -114,14 +76,8 @@ public class TurmaController {
      */
     @GetMapping("/periodo/{periodo}")
     public ResponseEntity<List<Turma>> buscarPorPeriodo(@PathVariable Periodo periodo) {
-        try {
-            List<Turma> turmas = turmaService.buscarPorPeriodo(periodo);
-            return new ResponseEntity<>(turmas, HttpStatus.OK);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        List<Turma> turmas = turmaService.buscarPorPeriodo(periodo);
+        return ResponseEntity.ok(turmas);
     }
 
     /**
@@ -129,16 +85,10 @@ public class TurmaController {
      */
     @GetMapping("/ano/{anoLetivo}/semestre/{semestre}")
     public ResponseEntity<List<Turma>> buscarPorAnoLetivoESemestre(
-            @PathVariable String anoLetivo, 
+            @PathVariable String anoLetivo,
             @PathVariable String semestre) {
-        try {
-            List<Turma> turmas = turmaService.buscarPorAnoLetivoESemestre(anoLetivo, semestre);
-            return new ResponseEntity<>(turmas, HttpStatus.OK);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        List<Turma> turmas = turmaService.buscarPorAnoLetivoESemestre(anoLetivo, semestre);
+        return ResponseEntity.ok(turmas);
     }
 
     /**
@@ -146,12 +96,8 @@ public class TurmaController {
      */
     @GetMapping
     public ResponseEntity<List<Turma>> listarTodas() {
-        try {
-            List<Turma> turmas = turmaService.listarTodas();
-            return new ResponseEntity<>(turmas, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        List<Turma> turmas = turmaService.listarTodas();
+        return ResponseEntity.ok(turmas);
     }
 
     /**
@@ -159,12 +105,8 @@ public class TurmaController {
      */
     @GetMapping("/ativas")
     public ResponseEntity<List<Turma>> listarAtivas() {
-        try {
-            List<Turma> turmas = turmaService.listarAtivas();
-            return new ResponseEntity<>(turmas, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        List<Turma> turmas = turmaService.listarAtivas();
+        return ResponseEntity.ok(turmas);
     }
 
     /**
@@ -172,12 +114,8 @@ public class TurmaController {
      */
     @GetMapping("/inativas")
     public ResponseEntity<List<Turma>> listarInativas() {
-        try {
-            List<Turma> turmas = turmaService.listarInativas();
-            return new ResponseEntity<>(turmas, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        List<Turma> turmas = turmaService.listarInativas();
+        return ResponseEntity.ok(turmas);
     }
 
     /**
@@ -185,14 +123,8 @@ public class TurmaController {
      */
     @PatchMapping("/desativar/{id}")
     public ResponseEntity<Void> desativar(@PathVariable Long id) {
-        try {
-            turmaService.desativar(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        turmaService.desativar(id);
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -200,14 +132,8 @@ public class TurmaController {
      */
     @PatchMapping("/reativar/{id}")
     public ResponseEntity<Void> reativar(@PathVariable Long id) {
-        try {
-            turmaService.reativar(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        turmaService.reativar(id);
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -215,13 +141,7 @@ public class TurmaController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
-        try {
-            turmaService.deletar(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        turmaService.deletar(id);
+        return ResponseEntity.ok().build();
     }
 }

@@ -2,8 +2,6 @@ package com.davi.gestaoescolar.gestao_escolar.controller;
 
 import com.davi.gestaoescolar.gestao_escolar.dto.Comportamento.ComportamentoDtoIn;
 import com.davi.gestaoescolar.gestao_escolar.dto.Comportamento.ComportamentoDtoOut;
-import com.davi.gestaoescolar.gestao_escolar.model.enums.Gravidade;
-import com.davi.gestaoescolar.gestao_escolar.model.enums.TipoComportamento;
 import com.davi.gestaoescolar.gestao_escolar.service.ComportamentoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -12,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
+
 
 @RestController
 @RequestMapping("/api/comportamentos")

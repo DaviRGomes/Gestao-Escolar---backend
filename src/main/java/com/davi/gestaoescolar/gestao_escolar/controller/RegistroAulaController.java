@@ -2,11 +2,19 @@ package com.davi.gestaoescolar.gestao_escolar.controller;
 
 import com.davi.gestaoescolar.gestao_escolar.model.RegistroAula;
 import com.davi.gestaoescolar.gestao_escolar.service.RegistroAulaService;
+
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -24,14 +32,8 @@ public class RegistroAulaController {
      */
     @PostMapping
     public ResponseEntity<RegistroAula> salvar(@RequestBody RegistroAula registroAula) {
-        try {
-            RegistroAula novoRegistro = registroAulaService.salvar(registroAula);
-            return new ResponseEntity<>(novoRegistro, HttpStatus.CREATED);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        RegistroAula novoRegistro = registroAulaService.salvar(registroAula);
+        return ResponseEntity.ok(novoRegistro);
     }
 
     /**
@@ -39,33 +41,17 @@ public class RegistroAulaController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<RegistroAula> atualizar(@PathVariable Long id, @RequestBody RegistroAula registroAula) {
-        try {
-            RegistroAula registroAtualizado = registroAulaService.atualizar(id, registroAula);
-            return new ResponseEntity<>(registroAtualizado, HttpStatus.OK);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        RegistroAula registroAtualizado = registroAulaService.atualizar(id, registroAula);
+        return ResponseEntity.ok(registroAtualizado);
     }
 
     /**
      * Buscar registro de aula por ID
      */
     @GetMapping("/{id}")
-    public ResponseEntity<RegistroAula> buscarPorId(@PathVariable Long id) {
-        try {
-            Optional<RegistroAula> registro = registroAulaService.buscarPorId(id);
-            if (registro.isPresent()) {
-                return new ResponseEntity<>(registro.get(), HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
-            }
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<Optional<RegistroAula>> buscarPorId(@PathVariable Long id) {
+        Optional<RegistroAula> registro = registroAulaService.buscarPorId(id);
+        return ResponseEntity.ok(registro);
     }
 
     /**
@@ -73,12 +59,8 @@ public class RegistroAulaController {
      */
     @GetMapping
     public ResponseEntity<List<RegistroAula>> listarTodos() {
-        try {
-            List<RegistroAula> registros = registroAulaService.listarTodos();
-            return new ResponseEntity<>(registros, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        List<RegistroAula> registros = registroAulaService.listarTodos();
+        return ResponseEntity.ok(registros);
     }
 
     /**
@@ -87,14 +69,8 @@ public class RegistroAulaController {
     @GetMapping("/data/{data}")
     public ResponseEntity<List<RegistroAula>> buscarPorData(
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data) {
-        try {
-            List<RegistroAula> registros = registroAulaService.buscarPorData(data);
-            return new ResponseEntity<>(registros, HttpStatus.OK);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        List<RegistroAula> registros = registroAulaService.buscarPorData(data);
+        return ResponseEntity.ok(registros);
     }
 
     /**
@@ -104,14 +80,8 @@ public class RegistroAulaController {
     public ResponseEntity<List<RegistroAula>> buscarPorPeriodo(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim) {
-        try {
-            List<RegistroAula> registros = registroAulaService.buscarPorPeriodo(dataInicio, dataFim);
-            return new ResponseEntity<>(registros, HttpStatus.OK);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        List<RegistroAula> registros = registroAulaService.buscarPorPeriodo(dataInicio, dataFim);
+        return ResponseEntity.ok(registros);
     }
 
     /**
@@ -119,14 +89,8 @@ public class RegistroAulaController {
      */
     @GetMapping("/turma/{turmaId}")
     public ResponseEntity<List<RegistroAula>> buscarPorTurma(@PathVariable Long turmaId) {
-        try {
-            List<RegistroAula> registros = registroAulaService.buscarPorTurma(turmaId);
-            return new ResponseEntity<>(registros, HttpStatus.OK);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        List<RegistroAula> registros = registroAulaService.buscarPorTurma(turmaId);
+        return ResponseEntity.ok(registros);
     }
 
     /**
@@ -134,14 +98,8 @@ public class RegistroAulaController {
      */
     @GetMapping("/disciplina/{disciplinaId}")
     public ResponseEntity<List<RegistroAula>> buscarPorDisciplina(@PathVariable Long disciplinaId) {
-        try {
-            List<RegistroAula> registros = registroAulaService.buscarPorDisciplina(disciplinaId);
-            return new ResponseEntity<>(registros, HttpStatus.OK);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        List<RegistroAula> registros = registroAulaService.buscarPorDisciplina(disciplinaId);
+        return ResponseEntity.ok(registros);
     }
 
     /**
@@ -150,14 +108,8 @@ public class RegistroAulaController {
     @GetMapping("/turma/{turmaId}/disciplina/{disciplinaId}")
     public ResponseEntity<List<RegistroAula>> buscarPorTurmaEDisciplina(
             @PathVariable Long turmaId, @PathVariable Long disciplinaId) {
-        try {
-            List<RegistroAula> registros = registroAulaService.buscarPorTurmaEDisciplina(turmaId, disciplinaId);
-            return new ResponseEntity<>(registros, HttpStatus.OK);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        List<RegistroAula> registros = registroAulaService.buscarPorTurmaEDisciplina(turmaId, disciplinaId);
+        return ResponseEntity.ok(registros);
     }
 
     /**
@@ -165,14 +117,8 @@ public class RegistroAulaController {
      */
     @GetMapping("/conteudo-planejado/{conteudoPlanejadoId}")
     public ResponseEntity<List<RegistroAula>> buscarPorConteudoPlanejado(@PathVariable Long conteudoPlanejadoId) {
-        try {
-            List<RegistroAula> registros = registroAulaService.buscarPorConteudoPlanejado(conteudoPlanejadoId);
-            return new ResponseEntity<>(registros, HttpStatus.OK);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        List<RegistroAula> registros = registroAulaService.buscarPorConteudoPlanejado(conteudoPlanejadoId);
+        return ResponseEntity.ok(registros);
     }
 
     /**
@@ -183,14 +129,8 @@ public class RegistroAulaController {
             @PathVariable Long turmaId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim) {
-        try {
-            List<RegistroAula> registros = registroAulaService.buscarPorTurmaEPeriodo(turmaId, dataInicio, dataFim);
-            return new ResponseEntity<>(registros, HttpStatus.OK);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        List<RegistroAula> registros = registroAulaService.buscarPorTurmaEPeriodo(turmaId, dataInicio, dataFim);
+        return ResponseEntity.ok(registros);
     }
 
     /**
@@ -201,14 +141,8 @@ public class RegistroAulaController {
             @PathVariable Long disciplinaId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim) {
-        try {
-            List<RegistroAula> registros = registroAulaService.buscarPorDisciplinaEPeriodo(disciplinaId, dataInicio, dataFim);
-            return new ResponseEntity<>(registros, HttpStatus.OK);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        List<RegistroAula> registros = registroAulaService.buscarPorDisciplinaEPeriodo(disciplinaId, dataInicio, dataFim);
+        return ResponseEntity.ok(registros);
     }
 
     /**
@@ -216,12 +150,8 @@ public class RegistroAulaController {
      */
     @GetMapping("/hoje")
     public ResponseEntity<List<RegistroAula>> buscarAulasDeHoje() {
-        try {
-            List<RegistroAula> registros = registroAulaService.buscarAulasDeHoje();
-            return new ResponseEntity<>(registros, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        List<RegistroAula> registros = registroAulaService.buscarAulasDeHoje();
+        return ResponseEntity.ok(registros);
     }
 
     /**
@@ -229,12 +159,8 @@ public class RegistroAulaController {
      */
     @GetMapping("/semana")
     public ResponseEntity<List<RegistroAula>> buscarAulasDaSemana() {
-        try {
-            List<RegistroAula> registros = registroAulaService.buscarAulasDaSemana();
-            return new ResponseEntity<>(registros, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        List<RegistroAula> registros = registroAulaService.buscarAulasDaSemana();
+        return ResponseEntity.ok(registros);
     }
 
     /**
@@ -242,12 +168,8 @@ public class RegistroAulaController {
      */
     @GetMapping("/mes")
     public ResponseEntity<List<RegistroAula>> buscarAulasDoMes() {
-        try {
-            List<RegistroAula> registros = registroAulaService.buscarAulasDoMes();
-            return new ResponseEntity<>(registros, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        List<RegistroAula> registros = registroAulaService.buscarAulasDoMes();
+        return ResponseEntity.ok(registros);
     }
 
     /**
@@ -259,15 +181,7 @@ public class RegistroAulaController {
             @RequestParam Long disciplinaId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data,
             @RequestParam String descricao) {
-        try {
-            RegistroAula registro = registroAulaService.criarRegistroBasico(turmaId, disciplinaId, data, descricao);
-            return new ResponseEntity<>(registro, HttpStatus.CREATED);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        RegistroAula registro = registroAulaService.criarRegistroBasico(turmaId, disciplinaId, data, descricao);
+        return ResponseEntity.ok(registro);
     }
 }

@@ -2,9 +2,8 @@ package com.davi.gestaoescolar.gestao_escolar.dto.Aluno;
 
 import com.davi.gestaoescolar.gestao_escolar.dto.Responsavel.ResponsavelDtoOut;
 import com.davi.gestaoescolar.gestao_escolar.dto.Matricula.MatriculaDtoOut;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
-
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,7 +12,7 @@ import java.util.List;
 
 @Getter
 @Setter
-@AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class AlunoDtoOut {
     private Long id;
     private String nome;
@@ -29,6 +28,22 @@ public class AlunoDtoOut {
         this.id = id;
         this.nome = nome;
     }
+
+    public AlunoDtoOut(Long id, String nome, LocalDate dataNascimento, String cpf, String observacoes, Boolean ativo,
+            List<MatriculaDtoOut> matriculas, List<ResponsavelDtoOut> responsaveis) {
+        this.id = id;
+        this.nome = nome;
+        this.dataNascimento = dataNascimento;
+        this.cpf = cpf;
+        this.observacoes = observacoes;
+        this.ativo = ativo;
+        this.matriculas = matriculas;
+        this.responsaveis = responsaveis;
+    }
+
+    
+
+
 
     
 
