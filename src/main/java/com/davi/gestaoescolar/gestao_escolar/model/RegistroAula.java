@@ -52,19 +52,19 @@ public class RegistroAula {
     // Construtores
     public RegistroAula() {}
 
-    public RegistroAula(LocalDate data, String descricao, Turma turma, Disciplina disciplina) {
-        this.data = data;
-        this.descricao = descricao;
-        this.turma = turma;
-        this.disciplina = disciplina;
-    }
-
-    public RegistroAula(LocalDate data, String descricao, String observacoes, Turma turma, Disciplina disciplina) {
+    public RegistroAula(LocalDate data, String descricao, String observacoes, Turma turma, Disciplina disciplina,
+        List<Presenca> presencas, List<Nota> notas, ConteudoPlanejado conteudoPlanejado) {
         this.data = data;
         this.descricao = descricao;
         this.observacoes = observacoes;
         this.turma = turma;
         this.disciplina = disciplina;
+        this.presencas = presencas;
+        this.notas = notas;
+        this.conteudoPlanejado = conteudoPlanejado;
     }
+
+
+
 
 }

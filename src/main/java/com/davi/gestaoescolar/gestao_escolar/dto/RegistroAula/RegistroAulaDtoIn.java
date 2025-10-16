@@ -11,6 +11,7 @@ import java.time.LocalTime;
 public class RegistroAulaDtoIn {
     private LocalDate data;
     private LocalTime horaInicio;
+    private String descricao;
     private LocalTime horaFim;
     private String conteudoMinistrado;
     private String observacoes;

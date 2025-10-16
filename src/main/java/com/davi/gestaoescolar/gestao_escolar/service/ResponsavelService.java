@@ -1,5 +1,8 @@
 package com.davi.gestaoescolar.gestao_escolar.service;
 
+import com.davi.gestaoescolar.gestao_escolar.dto.Aluno.AlunoDtoOut;
+import com.davi.gestaoescolar.gestao_escolar.dto.Responsavel.ResponsavelDtoIn;
+import com.davi.gestaoescolar.gestao_escolar.dto.Responsavel.ResponsavelDtoOut;
 import com.davi.gestaoescolar.gestao_escolar.model.Responsavel;
 
 import com.davi.gestaoescolar.gestao_escolar.repository.ResponsavelRepository;
@@ -9,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -18,6 +22,25 @@ public class ResponsavelService {
     @Autowired
     private ResponsavelRepository responsavelRepository;
 
+
+    // Conversão de entidade -> DTO de saída
+    private ResponsavelDtoOut toDTO(Responsavel responsavel) {
+        List<AlunoDtoOut> alunosDTO = responsavel.getResponsaveis().stream()
+            .map(ar -> new AlunoDtoOut(
+                ar.getAluno() != null ? ar.getAluno().getId() : null,
+                ar.getAluno() != null ? ar.getAluno().getNome() : null
+            ))
+            .collect(Collectors.toList());
+
+        return new ResponsavelDtoOut(
+            responsavel.getId(),
+            responsavel.getNome(),
+            responsavel.getTelefone(),
+            responsavel.getCpf(),
+            responsavel.getParentesco(),
+            alunosDTO
+        );
+    }
 
 
     /**
@@ -196,5 +219,39 @@ public class ResponsavelService {
         
         // Verifica se tem 10 ou 11 dígitos (com DDD)
         return telefoneNumerico.length() == 10 || telefoneNumerico.length() == 11;
+    }
+
+
+
+    // Consultas com DTO
+    @Transactional(readOnly = true)
+    public Optional<ResponsavelDtoOut> buscarPorIdDto(Long id) {
+        return responsavelRepository.findById(id).map(this::toDTO);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<ResponsavelDtoOut> buscarPorCpfDto(String cpf) {
+        return responsavelRepository.findByCpf(cpf).map(this::toDTO);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ResponsavelDtoOut> listarTodosDto() {
+        return responsavelRepository.findAll().stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<ResponsavelDtoOut> buscarPorNomeDto(String nome) {
+        return responsavelRepository.findByNomeContainingIgnoreCase(nome).stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<ResponsavelDtoOut> buscarPorTelefoneDto(String telefone) {
+        return responsavelRepository.findByTelefoneContaining(telefone).stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 }

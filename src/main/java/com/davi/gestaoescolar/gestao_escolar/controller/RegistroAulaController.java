@@ -1,6 +1,7 @@
 package com.davi.gestaoescolar.gestao_escolar.controller;
 
-import com.davi.gestaoescolar.gestao_escolar.model.RegistroAula;
+import com.davi.gestaoescolar.gestao_escolar.dto.RegistroAula.RegistroAulaDtoIn;
+import com.davi.gestaoescolar.gestao_escolar.dto.RegistroAula.RegistroAulaDtoOut;
 import com.davi.gestaoescolar.gestao_escolar.service.RegistroAulaService;
 
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
@@ -31,8 +32,8 @@ public class RegistroAulaController {
      * Salvar novo registro de aula
      */
     @PostMapping
-    public ResponseEntity<RegistroAula> salvar(@RequestBody RegistroAula registroAula) {
-        RegistroAula novoRegistro = registroAulaService.salvar(registroAula);
+    public ResponseEntity<RegistroAulaDtoOut> salvar(@RequestBody RegistroAulaDtoIn registroAula) {
+        RegistroAulaDtoOut novoRegistro = registroAulaService.salvar(registroAula);
         return ResponseEntity.ok(novoRegistro);
     }
 
@@ -40,8 +41,8 @@ public class RegistroAulaController {
      * Atualizar registro de aula existente
      */
     @PutMapping("/{id}")
-    public ResponseEntity<RegistroAula> atualizar(@PathVariable Long id, @RequestBody RegistroAula registroAula) {
-        RegistroAula registroAtualizado = registroAulaService.atualizar(id, registroAula);
+    public ResponseEntity<RegistroAulaDtoOut> atualizar(@PathVariable Long id, @RequestBody RegistroAulaDtoIn registroAula) {
+        RegistroAulaDtoOut registroAtualizado = registroAulaService.atualizar(id, registroAula);
         return ResponseEntity.ok(registroAtualizado);
     }
 
@@ -49,8 +50,8 @@ public class RegistroAulaController {
      * Buscar registro de aula por ID
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Optional<RegistroAula>> buscarPorId(@PathVariable Long id) {
-        Optional<RegistroAula> registro = registroAulaService.buscarPorId(id);
+    public ResponseEntity<Optional<RegistroAulaDtoOut>> buscarPorId(@PathVariable Long id) {
+        Optional<RegistroAulaDtoOut> registro = registroAulaService.buscarPorId(id);
         return ResponseEntity.ok(registro);
     }
 
@@ -58,8 +59,8 @@ public class RegistroAulaController {
      * Listar todos os registros de aula
      */
     @GetMapping
-    public ResponseEntity<List<RegistroAula>> listarTodos() {
-        List<RegistroAula> registros = registroAulaService.listarTodos();
+    public ResponseEntity<List<RegistroAulaDtoOut>> listarTodos() {
+        List<RegistroAulaDtoOut> registros = registroAulaService.listarTodos();
         return ResponseEntity.ok(registros);
     }
 
@@ -67,9 +68,9 @@ public class RegistroAulaController {
      * Buscar registros de aula por data
      */
     @GetMapping("/data/{data}")
-    public ResponseEntity<List<RegistroAula>> buscarPorData(
+    public ResponseEntity<List<RegistroAulaDtoOut>> buscarPorData(
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data) {
-        List<RegistroAula> registros = registroAulaService.buscarPorData(data);
+        List<RegistroAulaDtoOut> registros = registroAulaService.buscarPorData(data);
         return ResponseEntity.ok(registros);
     }
 
@@ -77,10 +78,10 @@ public class RegistroAulaController {
      * Buscar registros de aula por período
      */
     @GetMapping("/periodo")
-    public ResponseEntity<List<RegistroAula>> buscarPorPeriodo(
+    public ResponseEntity<List<RegistroAulaDtoOut>> buscarPorPeriodo(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim) {
-        List<RegistroAula> registros = registroAulaService.buscarPorPeriodo(dataInicio, dataFim);
+        List<RegistroAulaDtoOut> registros = registroAulaService.buscarPorPeriodo(dataInicio, dataFim);
         return ResponseEntity.ok(registros);
     }
 
@@ -88,8 +89,8 @@ public class RegistroAulaController {
      * Buscar registros de aula por turma
      */
     @GetMapping("/turma/{turmaId}")
-    public ResponseEntity<List<RegistroAula>> buscarPorTurma(@PathVariable Long turmaId) {
-        List<RegistroAula> registros = registroAulaService.buscarPorTurma(turmaId);
+    public ResponseEntity<List<RegistroAulaDtoOut>> buscarPorTurma(@PathVariable Long turmaId) {
+        List<RegistroAulaDtoOut> registros = registroAulaService.buscarPorTurma(turmaId);
         return ResponseEntity.ok(registros);
     }
 
@@ -97,8 +98,8 @@ public class RegistroAulaController {
      * Buscar registros de aula por disciplina
      */
     @GetMapping("/disciplina/{disciplinaId}")
-    public ResponseEntity<List<RegistroAula>> buscarPorDisciplina(@PathVariable Long disciplinaId) {
-        List<RegistroAula> registros = registroAulaService.buscarPorDisciplina(disciplinaId);
+    public ResponseEntity<List<RegistroAulaDtoOut>> buscarPorDisciplina(@PathVariable Long disciplinaId) {
+        List<RegistroAulaDtoOut> registros = registroAulaService.buscarPorDisciplina(disciplinaId);
         return ResponseEntity.ok(registros);
     }
 
@@ -106,9 +107,9 @@ public class RegistroAulaController {
      * Buscar registros de aula por turma e disciplina
      */
     @GetMapping("/turma/{turmaId}/disciplina/{disciplinaId}")
-    public ResponseEntity<List<RegistroAula>> buscarPorTurmaEDisciplina(
+    public ResponseEntity<List<RegistroAulaDtoOut>> buscarPorTurmaEDisciplina(
             @PathVariable Long turmaId, @PathVariable Long disciplinaId) {
-        List<RegistroAula> registros = registroAulaService.buscarPorTurmaEDisciplina(turmaId, disciplinaId);
+        List<RegistroAulaDtoOut> registros = registroAulaService.buscarPorTurmaEDisciplina(turmaId, disciplinaId);
         return ResponseEntity.ok(registros);
     }
 
@@ -116,8 +117,8 @@ public class RegistroAulaController {
      * Buscar registros de aula por conteúdo planejado
      */
     @GetMapping("/conteudo-planejado/{conteudoPlanejadoId}")
-    public ResponseEntity<List<RegistroAula>> buscarPorConteudoPlanejado(@PathVariable Long conteudoPlanejadoId) {
-        List<RegistroAula> registros = registroAulaService.buscarPorConteudoPlanejado(conteudoPlanejadoId);
+    public ResponseEntity<List<RegistroAulaDtoOut>> buscarPorConteudoPlanejado(@PathVariable Long conteudoPlanejadoId) {
+        List<RegistroAulaDtoOut> registros = registroAulaService.buscarPorConteudoPlanejado(conteudoPlanejadoId);
         return ResponseEntity.ok(registros);
     }
 
@@ -125,11 +126,11 @@ public class RegistroAulaController {
      * Buscar registros de aula por turma e período
      */
     @GetMapping("/turma/{turmaId}/periodo")
-    public ResponseEntity<List<RegistroAula>> buscarPorTurmaEPeriodo(
+    public ResponseEntity<List<RegistroAulaDtoOut>> buscarPorTurmaEPeriodo(
             @PathVariable Long turmaId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim) {
-        List<RegistroAula> registros = registroAulaService.buscarPorTurmaEPeriodo(turmaId, dataInicio, dataFim);
+        List<RegistroAulaDtoOut> registros = registroAulaService.buscarPorTurmaEPeriodo(turmaId, dataInicio, dataFim);
         return ResponseEntity.ok(registros);
     }
 
@@ -137,11 +138,11 @@ public class RegistroAulaController {
      * Buscar registros de aula por disciplina e período
      */
     @GetMapping("/disciplina/{disciplinaId}/periodo")
-    public ResponseEntity<List<RegistroAula>> buscarPorDisciplinaEPeriodo(
+    public ResponseEntity<List<RegistroAulaDtoOut>> buscarPorDisciplinaEPeriodo(
             @PathVariable Long disciplinaId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim) {
-        List<RegistroAula> registros = registroAulaService.buscarPorDisciplinaEPeriodo(disciplinaId, dataInicio, dataFim);
+        List<RegistroAulaDtoOut> registros = registroAulaService.buscarPorDisciplinaEPeriodo(disciplinaId, dataInicio, dataFim);
         return ResponseEntity.ok(registros);
     }
 
@@ -149,8 +150,8 @@ public class RegistroAulaController {
      * Buscar aulas de hoje
      */
     @GetMapping("/hoje")
-    public ResponseEntity<List<RegistroAula>> buscarAulasDeHoje() {
-        List<RegistroAula> registros = registroAulaService.buscarAulasDeHoje();
+    public ResponseEntity<List<RegistroAulaDtoOut>> buscarAulasDeHoje() {
+        List<RegistroAulaDtoOut> registros = registroAulaService.buscarAulasDeHoje();
         return ResponseEntity.ok(registros);
     }
 
@@ -158,8 +159,8 @@ public class RegistroAulaController {
      * Buscar aulas da semana atual
      */
     @GetMapping("/semana")
-    public ResponseEntity<List<RegistroAula>> buscarAulasDaSemana() {
-        List<RegistroAula> registros = registroAulaService.buscarAulasDaSemana();
+    public ResponseEntity<List<RegistroAulaDtoOut>> buscarAulasDaSemana() {
+        List<RegistroAulaDtoOut> registros = registroAulaService.buscarAulasDaSemana();
         return ResponseEntity.ok(registros);
     }
 
@@ -167,21 +168,9 @@ public class RegistroAulaController {
      * Buscar aulas do mês atual
      */
     @GetMapping("/mes")
-    public ResponseEntity<List<RegistroAula>> buscarAulasDoMes() {
-        List<RegistroAula> registros = registroAulaService.buscarAulasDoMes();
+    public ResponseEntity<List<RegistroAulaDtoOut>> buscarAulasDoMes() {
+        List<RegistroAulaDtoOut> registros = registroAulaService.buscarAulasDoMes();
         return ResponseEntity.ok(registros);
     }
 
-    /**
-     * Criar registro de aula básico
-     */
-    @PostMapping("/basico")
-    public ResponseEntity<RegistroAula> criarRegistroBasico(
-            @RequestParam Long turmaId,
-            @RequestParam Long disciplinaId,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data,
-            @RequestParam String descricao) {
-        RegistroAula registro = registroAulaService.criarRegistroBasico(turmaId, disciplinaId, data, descricao);
-        return ResponseEntity.ok(registro);
-    }
 }

@@ -5,9 +5,11 @@ import com.davi.gestaoescolar.gestao_escolar.dto.RegistroAula.RegistroAulaDtoOut
 import com.davi.gestaoescolar.gestao_escolar.dto.Disciplina.DisciplinaDtoOut;
 import com.davi.gestaoescolar.gestao_escolar.dto.Turma.TurmaDtoOut;
 import com.davi.gestaoescolar.gestao_escolar.dto.ConteudoPlanejado.ConteudoPlanejadoDtoOut;
+import com.davi.gestaoescolar.gestao_escolar.model.ConteudoPlanejado;
 import com.davi.gestaoescolar.gestao_escolar.model.Disciplina;
 import com.davi.gestaoescolar.gestao_escolar.model.RegistroAula;
 import com.davi.gestaoescolar.gestao_escolar.model.Turma;
+import com.davi.gestaoescolar.gestao_escolar.repository.ConteudoPlanejadoRepository;
 import com.davi.gestaoescolar.gestao_escolar.repository.DisciplinaRepository;
 import com.davi.gestaoescolar.gestao_escolar.repository.RegistroAulaRepository;
 import com.davi.gestaoescolar.gestao_escolar.repository.TurmaRepository;
@@ -18,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -31,6 +34,9 @@ public class RegistroAulaService {
     
     @Autowired
     private DisciplinaRepository disciplinaRepository;
+
+    @Autowired
+    private ConteudoPlanejadoRepository conteudoPlanejadoRepository;
     
     public RegistroAulaDtoOut toDto(RegistroAula registroAula) {
         TurmaDtoOut turmaDto = null;
@@ -97,8 +103,9 @@ public class RegistroAulaService {
             dtoIn.getObservacoes(),
             turma,
             disciplina,
+            null,
+            null,
             conteudoPlanejado
-          
         );
         
         return toDto(registroAulaRepository.save(registroAula));
@@ -107,111 +114,114 @@ public class RegistroAulaService {
     /**
      * Atualiza um registro de aula existente
      */
-    public RegistroAula atualizar(Long id, RegistroAula registroAtualizado) {
+    public RegistroAulaDtoOut atualizar(Long id, RegistroAulaDtoIn dtoIn) {
         Optional<RegistroAula> registroExistente = registroAulaRepository.findById(id);
         if (registroExistente.isEmpty()) {
             throw new RuntimeException("Registro de aula não encontrado com ID: " + id);
         }
 
-        validarDadosRegistroAula(registroAtualizado);
-        validarTurmaEDisciplina(registroAtualizado.getTurma(), registroAtualizado.getDisciplina());
+        validarDadosRegistroAula(dtoIn);
+        validarTurmaEDisciplina(dtoIn.getTurmaId(), dtoIn.getDisciplinaId());
         
         RegistroAula registro = registroExistente.get();
-        registro.setData(registroAtualizado.getData());
-        registro.setDescricao(registroAtualizado.getDescricao());
-        registro.setObservacoes(registroAtualizado.getObservacoes());
-        registro.setTurma(registroAtualizado.getTurma());
-        registro.setDisciplina(registroAtualizado.getDisciplina());
-        registro.setConteudoPlanejado(registroAtualizado.getConteudoPlanejado());
+        registro.setData(dtoIn.getData());
+        registro.setDescricao(dtoIn.getDescricao());
+        registro.setObservacoes(dtoIn.getObservacoes());            
+        registro.setTurma(turmaRepository.findById(dtoIn.getTurmaId()).
+            orElseThrow(() -> new RuntimeException("Turma não encontrada com ID: " + dtoIn.getTurmaId())));
+        registro.setDisciplina(disciplinaRepository.findById(dtoIn.getDisciplinaId()).
+            orElseThrow(() -> new RuntimeException("Disciplina não encontrada com ID: " + dtoIn.getDisciplinaId())));
+        registro.setConteudoPlanejado(conteudoPlanejadoRepository.findById(dtoIn.getConteudoPlanejadoId()).
+            orElseThrow(() -> new RuntimeException("Conteúdo planejado não encontrado com ID: " + dtoIn.getConteudoPlanejadoId())));
         
-        return registroAulaRepository.save(registro);
+        return toDto(registroAulaRepository.save(registro));
     }
 
     /**
      * Busca registro de aula por ID
      */
     @Transactional(readOnly = true)
-    public Optional<RegistroAula> buscarPorId(Long id) {
-        return registroAulaRepository.findById(id);
+    public Optional<RegistroAulaDtoOut> buscarPorId(Long id) {
+        return registroAulaRepository.findById(id).map(this::toDto);
     }
 
     /**
      * Busca registros de aula por data
      */
     @Transactional(readOnly = true)
-    public List<RegistroAula> buscarPorData(LocalDate data) {
+    public List<RegistroAulaDtoOut> buscarPorData(LocalDate data) {
         if (data == null) {
             throw new IllegalArgumentException("Data não pode ser nula");
         }
-        return registroAulaRepository.findByData(data);
+        return registroAulaRepository.findByData(data).stream().map(this::toDto).collect(Collectors.toList());
     }
 
     /**
      * Busca registros de aula por período
      */
     @Transactional(readOnly = true)
-    public List<RegistroAula> buscarPorPeriodo(LocalDate dataInicio, LocalDate dataFim) {
+    public List<RegistroAulaDtoOut> buscarPorPeriodo(LocalDate dataInicio, LocalDate dataFim) {
         if (dataInicio == null || dataFim == null) {
             throw new IllegalArgumentException("Datas de início e fim não podem ser nulas");
         }
         if (dataInicio.isAfter(dataFim)) {
             throw new IllegalArgumentException("Data de início não pode ser posterior à data de fim");
         }
-        return registroAulaRepository.findByDataBetween(dataInicio, dataFim);
+        return registroAulaRepository.findByDataBetween(dataInicio, dataFim).stream().map(this::toDto).collect(Collectors.toList());
     }
 
     /**
      * Busca registros de aula por turma
      */
     @Transactional(readOnly = true)
-    public List<RegistroAula> buscarPorTurma(Long turmaId) {
+    public List<RegistroAulaDtoOut> buscarPorTurma(Long turmaId) {
         if (turmaId == null) {
             throw new IllegalArgumentException("ID da turma não pode ser nulo");
         }
-        return registroAulaRepository.findByTurmaId(turmaId);
+        return registroAulaRepository.findByTurmaId(turmaId).stream().map(this::toDto).collect(Collectors.toList());   
     }
 
     /**
      * Busca registros de aula por disciplina
      */
     @Transactional(readOnly = true)
-    public List<RegistroAula> buscarPorDisciplina(Long disciplinaId) {
+    public List<RegistroAulaDtoOut> buscarPorDisciplina(Long disciplinaId) {
         if (disciplinaId == null) {
             throw new IllegalArgumentException("ID da disciplina não pode ser nulo");
         }
-        return registroAulaRepository.findByDisciplinaId(disciplinaId);
+        return registroAulaRepository.findByDisciplinaId(disciplinaId).stream().map(this::toDto).collect(Collectors.toList());
     }
 
     /**
      * Busca registros de aula por turma e disciplina
      */
     @Transactional(readOnly = true)
-    public List<RegistroAula> buscarPorTurmaEDisciplina(Long turmaId, Long disciplinaId) {
+    public List<RegistroAulaDtoOut> buscarPorTurmaEDisciplina(Long turmaId, Long disciplinaId) {
         if (turmaId == null) {
             throw new IllegalArgumentException("ID da turma não pode ser nulo");
         }
         if (disciplinaId == null) {
             throw new IllegalArgumentException("ID da disciplina não pode ser nulo");
         }
-        return registroAulaRepository.findByTurmaIdAndDisciplinaId(turmaId, disciplinaId);
+        return registroAulaRepository.findByTurmaIdAndDisciplinaId(turmaId, disciplinaId).stream().map(this::toDto).collect(Collectors.toList());
     }
 
     /**
      * Busca registros de aula por conteúdo planejado
      */
     @Transactional(readOnly = true)
-    public List<RegistroAula> buscarPorConteudoPlanejado(Long conteudoPlanejadoId) {
+    public List<RegistroAulaDtoOut> buscarPorConteudoPlanejado(Long conteudoPlanejadoId) {
         if (conteudoPlanejadoId == null) {
             throw new IllegalArgumentException("ID do conteúdo planejado não pode ser nulo");
         }
-        return registroAulaRepository.findByConteudoPlanejadoId(conteudoPlanejadoId);
+        return registroAulaRepository.findByConteudoPlanejadoId(conteudoPlanejadoId).stream().map(this::toDto).collect(Collectors.toList());
     }
 
     /**
      * Busca registros de aula por turma e período
      */
     @Transactional(readOnly = true)
-    public List<RegistroAula> buscarPorTurmaEPeriodo(Long turmaId, LocalDate dataInicio, LocalDate dataFim) {
+    public List<RegistroAulaDtoOut> buscarPorTurmaEPeriodo(Long turmaId, LocalDate dataInicio, LocalDate dataFim) {
         if (turmaId == null) {
             throw new IllegalArgumentException("ID da turma não pode ser nulo");
         }
@@ -221,14 +231,14 @@ public class RegistroAulaService {
         if (dataInicio.isAfter(dataFim)) {
             throw new IllegalArgumentException("Data de início não pode ser posterior à data de fim");
         }
-        return registroAulaRepository.findByTurmaIdAndDataBetween(turmaId, dataInicio, dataFim);
+        return registroAulaRepository.findByTurmaIdAndDataBetween(turmaId, dataInicio, dataFim).stream().map(this::toDto).collect(Collectors.toList());
     }
 
     /**
      * Busca registros de aula por disciplina e período
      */
     @Transactional(readOnly = true)
-    public List<RegistroAula> buscarPorDisciplinaEPeriodo(Long disciplinaId, LocalDate dataInicio, LocalDate dataFim) {
+    public List<RegistroAulaDtoOut> buscarPorDisciplinaEPeriodo(Long disciplinaId, LocalDate dataInicio, LocalDate dataFim) {
         if (disciplinaId == null) {
             throw new IllegalArgumentException("ID da disciplina não pode ser nulo");
         }
@@ -238,45 +248,45 @@ public class RegistroAulaService {
         if (dataInicio.isAfter(dataFim)) {
             throw new IllegalArgumentException("Data de início não pode ser posterior à data de fim");
         }
-        return registroAulaRepository.findByDisciplinaIdAndDataBetween(disciplinaId, dataInicio, dataFim);
+        return registroAulaRepository.findByDisciplinaIdAndDataBetween(disciplinaId, dataInicio, dataFim).stream().map(this::toDto).collect(Collectors.toList());
     }
 
     /**
      * Lista todos os registros de aula
      */
     @Transactional(readOnly = true)
-    public List<RegistroAula> listarTodos() {
-        return registroAulaRepository.findAll();
+    public List<RegistroAulaDtoOut> listarTodos() {
+        return registroAulaRepository.findAll().stream().map(this::toDto).collect(Collectors.toList());
     }
 
     /**
      * Busca registros de aula de hoje
      */
     @Transactional(readOnly = true)
-    public List<RegistroAula> buscarAulasDeHoje() {
-        return registroAulaRepository.findByData(LocalDate.now());
+    public List<RegistroAulaDtoOut> buscarAulasDeHoje() {
+        return registroAulaRepository.findByData(LocalDate.now()).stream().map(this::toDto).collect(Collectors.toList());
     }
 
     /**
      * Busca registros de aula da semana atual
      */
     @Transactional(readOnly = true)
-    public List<RegistroAula> buscarAulasDaSemana() {
+    public List<RegistroAulaDtoOut> buscarAulasDaSemana() {
         LocalDate hoje = LocalDate.now();
         LocalDate inicioSemana = hoje.minusDays(hoje.getDayOfWeek().getValue() - 1);
         LocalDate fimSemana = inicioSemana.plusDays(6);
-        return registroAulaRepository.findByDataBetween(inicioSemana, fimSemana);
+        return registroAulaRepository.findByDataBetween(inicioSemana, fimSemana).stream().map(this::toDto).collect(Collectors.toList());
     }
 
     /**
      * Busca registros de aula do mês atual
      */
     @Transactional(readOnly = true)
-    public List<RegistroAula> buscarAulasDoMes() {
+    public List<RegistroAulaDtoOut> buscarAulasDoMes() {
         LocalDate hoje = LocalDate.now();
         LocalDate inicioMes = hoje.withDayOfMonth(1);
         LocalDate fimMes = hoje.withDayOfMonth(hoje.lengthOfMonth());
-        return registroAulaRepository.findByDataBetween(inicioMes, fimMes);
+        return registroAulaRepository.findByDataBetween(inicioMes, fimMes).stream().map(this::toDto).collect(Collectors.toList());
     }
 
     /**
@@ -287,29 +297,6 @@ public class RegistroAulaService {
             throw new RuntimeException("Registro de aula não encontrado com ID: " + id);
         }
         registroAulaRepository.deleteById(id);
-    }
-
-    /**
-     * Cria um registro de aula básico
-     */
-    public RegistroAula criarRegistroBasico(Long turmaId, Long disciplinaId, LocalDate data, String descricao) {
-        Optional<Turma> turma = turmaRepository.findById(turmaId);
-        if (turma.isEmpty()) {
-            throw new RuntimeException("Turma não encontrada com ID: " + turmaId);
-        }
-        
-        Optional<Disciplina> disciplina = disciplinaRepository.findById(disciplinaId);
-        if (disciplina.isEmpty()) {
-            throw new RuntimeException("Disciplina não encontrada com ID: " + disciplinaId);
-        }
-        
-        RegistroAula registro = new RegistroAula();
-        registro.setTurma(turma.get());
-        registro.setDisciplina(disciplina.get());
-        registro.setData(data != null ? data : LocalDate.now());
-        registro.setDescricao(descricao);
-        
-        return salvar(registro);
     }
 
     /**
