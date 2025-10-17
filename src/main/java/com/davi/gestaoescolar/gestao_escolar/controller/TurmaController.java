@@ -1,8 +1,9 @@
 package com.davi.gestaoescolar.gestao_escolar.controller;
 
-import com.davi.gestaoescolar.gestao_escolar.model.Turma;
 import com.davi.gestaoescolar.gestao_escolar.model.enums.Periodo;
 import com.davi.gestaoescolar.gestao_escolar.service.TurmaService;
+import com.davi.gestaoescolar.gestao_escolar.dto.Turma.TurmaDtoIn;
+import com.davi.gestaoescolar.gestao_escolar.dto.Turma.TurmaDtoOut;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,8 +22,8 @@ public class TurmaController {
      * Criar nova turma
      */
     @PostMapping
-    public ResponseEntity<Turma> criarTurma(@RequestBody Turma turma) {
-        Turma novaTurma = turmaService.salvar(turma);
+    public ResponseEntity<TurmaDtoOut> criarTurma(@RequestBody TurmaDtoIn turmaCreate) {
+        TurmaDtoOut novaTurma = turmaService.salvar(turmaCreate);
         return ResponseEntity.ok(novaTurma);
     }
 
@@ -30,8 +31,8 @@ public class TurmaController {
      * Atualizar turma existente
      */
     @PutMapping("/{id}")
-    public ResponseEntity<Turma> atualizarTurma(@PathVariable Long id, @RequestBody Turma turma) {
-        Turma turmaAtualizada = turmaService.atualizar(id, turma);
+    public ResponseEntity<TurmaDtoOut> atualizarTurma(@PathVariable Long id, @RequestBody TurmaDtoIn turmaCreate) {
+        TurmaDtoOut turmaAtualizada = turmaService.atualizar(id, turmaCreate);
         return ResponseEntity.ok(turmaAtualizada);
     }
 
@@ -39,8 +40,8 @@ public class TurmaController {
      * Buscar turma por ID
      */
     @GetMapping("/id/{id}")
-    public ResponseEntity<Optional<Turma>> buscarPorId(@PathVariable Long id) {
-        Optional<Turma> turma = turmaService.buscarPorId(id);
+    public ResponseEntity<Optional<TurmaDtoOut>> buscarPorId(@PathVariable Long id) {
+        Optional<TurmaDtoOut> turma = turmaService.buscarPorId(id);
         return ResponseEntity.ok(turma);
     }
 
@@ -48,8 +49,8 @@ public class TurmaController {
      * Buscar turmas por nome
      */
     @GetMapping("/nome/{nome}")
-    public ResponseEntity<List<Turma>> buscarPorNome(@PathVariable String nome) {
-        List<Turma> turmas = turmaService.buscarPorNome(nome);
+    public ResponseEntity<List<TurmaDtoOut>> buscarPorNome(@PathVariable String nome) {
+        List<TurmaDtoOut> turmas = turmaService.buscarPorNome(nome);
         return ResponseEntity.ok(turmas);
     }
 
@@ -57,8 +58,8 @@ public class TurmaController {
      * Buscar turmas por ano letivo
      */
     @GetMapping("/ano/{anoLetivo}")
-    public ResponseEntity<List<Turma>> buscarPorAnoLetivo(@PathVariable String anoLetivo) {
-        List<Turma> turmas = turmaService.buscarPorAnoLetivo(anoLetivo);
+    public ResponseEntity<List<TurmaDtoOut>> buscarPorAnoLetivo(@PathVariable String anoLetivo) {
+        List<TurmaDtoOut> turmas = turmaService.buscarPorAnoLetivo(anoLetivo);
         return ResponseEntity.ok(turmas);
     }
 
@@ -66,8 +67,8 @@ public class TurmaController {
      * Buscar turmas por semestre
      */
     @GetMapping("/semestre/{semestre}")
-    public ResponseEntity<List<Turma>> buscarPorSemestre(@PathVariable String semestre) {
-        List<Turma> turmas = turmaService.buscarPorSemestre(semestre);
+    public ResponseEntity<List<TurmaDtoOut>> buscarPorSemestre(@PathVariable String semestre) {
+        List<TurmaDtoOut> turmas = turmaService.buscarPorSemestre(semestre);
         return ResponseEntity.ok(turmas);
     }
 
@@ -75,8 +76,8 @@ public class TurmaController {
      * Buscar turmas por período
      */
     @GetMapping("/periodo/{periodo}")
-    public ResponseEntity<List<Turma>> buscarPorPeriodo(@PathVariable Periodo periodo) {
-        List<Turma> turmas = turmaService.buscarPorPeriodo(periodo);
+    public ResponseEntity<List<TurmaDtoOut>> buscarPorPeriodo(@PathVariable Periodo periodo) {
+        List<TurmaDtoOut> turmas = turmaService.buscarPorPeriodo(periodo);
         return ResponseEntity.ok(turmas);
     }
 
@@ -84,10 +85,10 @@ public class TurmaController {
      * Buscar turmas por ano letivo e semestre
      */
     @GetMapping("/ano/{anoLetivo}/semestre/{semestre}")
-    public ResponseEntity<List<Turma>> buscarPorAnoLetivoESemestre(
+    public ResponseEntity<List<TurmaDtoOut>> buscarPorAnoLetivoESemestre(
             @PathVariable String anoLetivo,
             @PathVariable String semestre) {
-        List<Turma> turmas = turmaService.buscarPorAnoLetivoESemestre(anoLetivo, semestre);
+        List<TurmaDtoOut> turmas = turmaService.buscarPorAnoLetivoESemestre(anoLetivo, semestre);
         return ResponseEntity.ok(turmas);
     }
 
@@ -95,8 +96,8 @@ public class TurmaController {
      * Listar todas as turmas
      */
     @GetMapping
-    public ResponseEntity<List<Turma>> listarTodas() {
-        List<Turma> turmas = turmaService.listarTodas();
+    public ResponseEntity<List<TurmaDtoOut>> listarTodas() {
+        List<TurmaDtoOut> turmas = turmaService.listarTodas();
         return ResponseEntity.ok(turmas);
     }
 
@@ -104,8 +105,8 @@ public class TurmaController {
      * Listar apenas turmas ativas
      */
     @GetMapping("/ativas")
-    public ResponseEntity<List<Turma>> listarAtivas() {
-        List<Turma> turmas = turmaService.listarAtivas();
+    public ResponseEntity<List<TurmaDtoOut>> listarAtivas() {
+        List<TurmaDtoOut> turmas = turmaService.listarAtivas();
         return ResponseEntity.ok(turmas);
     }
 
@@ -113,8 +114,8 @@ public class TurmaController {
      * Listar apenas turmas inativas
      */
     @GetMapping("/inativas")
-    public ResponseEntity<List<Turma>> listarInativas() {
-        List<Turma> turmas = turmaService.listarInativas();
+    public ResponseEntity<List<TurmaDtoOut>> listarInativas() {
+        List<TurmaDtoOut> turmas = turmaService.listarInativas();
         return ResponseEntity.ok(turmas);
     }
 

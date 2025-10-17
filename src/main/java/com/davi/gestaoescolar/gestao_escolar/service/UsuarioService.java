@@ -3,6 +3,8 @@ package com.davi.gestaoescolar.gestao_escolar.service;
 import com.davi.gestaoescolar.gestao_escolar.model.Usuario;
 import com.davi.gestaoescolar.gestao_escolar.model.enums.Perfil;
 import com.davi.gestaoescolar.gestao_escolar.repository.UsuarioRepository;
+import com.davi.gestaoescolar.gestao_escolar.dto.Usuario.UsuarioDtoIn;
+import com.davi.gestaoescolar.gestao_escolar.dto.Usuario.UsuarioDtoOut;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -25,12 +27,23 @@ public class UsuarioService {
     /**
      * Salva um novo usuário
      */
-    public Usuario salvar(Usuario usuario) {
-        if (usuario.getSenha() != null) {
-            usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
+    public UsuarioDtoOut salvar(UsuarioDtoIn dtoIn) {
+        validarDadosUsuario(dtoIn);
+
+        if (emailJaExiste(dtoIn.getEmail())) {
+            throw new RuntimeException("Email já cadastrado no sistema");
         }
-        usuario.setAtivo(true);
-        return usuarioRepository.save(usuario);
+
+        Usuario usuario = new Usuario();
+        usuario.setEmail(dtoIn.getEmail());
+        usuario.setSenha(passwordEncoder.encode(dtoIn.getSenha()));
+        usuario.setPerfil(dtoIn.getPerfil());
+        usuario.setDataNascimento(dtoIn.getDataNascimento());
+        usuario.setEndereco(dtoIn.getEndereco());
+        usuario.setAtivo(dtoIn.getAtivo() != null ? dtoIn.getAtivo() : true);
+
+        Usuario salvo = usuarioRepository.save(usuario);
+        return toDTO(salvo);
     }
 
     /**
@@ -204,5 +217,36 @@ public class UsuarioService {
     @Transactional(readOnly = true)
     public List<Usuario> listarComUltimoAcessoDepoisDe(LocalDateTime data) {
         return usuarioRepository.findByUltimoAcessoAfter(data);
+    }
+
+    // Conversão de entidade -> DTO de saída
+    private UsuarioDtoOut toDTO(Usuario usuario) {
+        return new UsuarioDtoOut(
+            usuario.getId(),
+            usuario.getEmail(),
+            usuario.getPerfil(),
+            usuario.getUltimoAcesso(),
+            usuario.getDataNascimento(),
+            usuario.getEndereco(),
+            usuario.getAtivo()
+        );
+    }
+    
+    /**
+     * Valida os dados do usuário (DTO de entrada)
+     */
+    private void validarDadosUsuario(UsuarioDtoIn dto) {
+        if (dto == null) {
+            throw new IllegalArgumentException("Usuário não pode ser nulo");
+        }
+        if (dto.getEmail() == null || dto.getEmail().trim().isEmpty()) {
+            throw new IllegalArgumentException("Email é obrigatório");
+        }
+        if (dto.getSenha() == null || dto.getSenha().trim().isEmpty()) {
+            throw new IllegalArgumentException("Senha é obrigatória");
+        }
+        if (dto.getPerfil() == null) {
+            throw new IllegalArgumentException("Perfil é obrigatório");
+        }
     }
 }

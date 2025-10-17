@@ -1,11 +1,15 @@
 package com.davi.gestaoescolar.gestao_escolar.service;
 
-import com.davi.gestaoescolar.gestao_escolar.dto.Aluno.AlunoDtoOut;
 import com.davi.gestaoescolar.gestao_escolar.dto.Responsavel.ResponsavelDtoIn;
 import com.davi.gestaoescolar.gestao_escolar.dto.Responsavel.ResponsavelDtoOut;
+import com.davi.gestaoescolar.gestao_escolar.dto.Aluno.AlunoDtoOut;
+import com.davi.gestaoescolar.gestao_escolar.model.Aluno;
+import com.davi.gestaoescolar.gestao_escolar.model.AlunoResponsavel;
 import com.davi.gestaoescolar.gestao_escolar.model.Responsavel;
 
 import com.davi.gestaoescolar.gestao_escolar.repository.ResponsavelRepository;
+import com.davi.gestaoescolar.gestao_escolar.repository.AlunoRepository;
+import com.davi.gestaoescolar.gestao_escolar.repository.AlunoResponsavelRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +25,10 @@ public class ResponsavelService {
 
     @Autowired
     private ResponsavelRepository responsavelRepository;
+    @Autowired
+    private AlunoRepository alunoRepository;
+    @Autowired
+    private AlunoResponsavelRepository alunoResponsavelRepository;
 
 
     // Conversão de entidade -> DTO de saída
@@ -46,78 +54,75 @@ public class ResponsavelService {
     /**
      * Salva um novo responsável
      */
-    public Responsavel salvar(Responsavel responsavel) {
-        // Validações
-        validarDadosResponsavel(responsavel);
-        
-        // Verificar se CPF já existe
-        if (cpfJaExiste(responsavel.getCpf())) {
-            throw new RuntimeException("CPF já cadastrado: " + responsavel.getCpf());
+    public ResponsavelDtoOut salvar(ResponsavelDtoIn dtoIn) {
+        if (cpfJaExiste(dtoIn.getCpf())) {
+            throw new RuntimeException("CPF já cadastrado: " + dtoIn.getCpf());
         }
-        
-        return responsavelRepository.save(responsavel);
+        Responsavel responsavel = new Responsavel(
+            dtoIn.getNome(),
+            dtoIn.getTelefone(),
+            dtoIn.getCpf(),
+            dtoIn.getParentesco()
+        );
+        validarDadosResponsavel(dtoIn);
+        Responsavel salvo = responsavelRepository.save(responsavel);
+        return toDTO(salvo);
     }
 
     /**
      * Atualiza um responsável existente
      */
-    public Responsavel atualizar(Long id, Responsavel responsavel) {
-        // Verificar se responsável existe
-        Optional<Responsavel> responsavelExistente = responsavelRepository.findById(responsavel.getId());
-        if (!responsavelExistente.isPresent()) {
-            throw new RuntimeException("Responsável não encontrado com ID: " + responsavel.getId());
+    public ResponsavelDtoOut atualizar(Long id, ResponsavelDtoIn dtoIn) {
+        Responsavel atual = responsavelRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Responsável não encontrado com ID: " + id));
+
+        if (dtoIn.getCpf() != null && !dtoIn.getCpf().equals(atual.getCpf()) && cpfJaExiste(dtoIn.getCpf())) {
+            throw new RuntimeException("CPF já cadastrado: " + dtoIn.getCpf());
         }
-        
-        // Verificar se o novo CPF já existe (se foi alterado)
-        Responsavel responsavelAtual = responsavelExistente.get();
-        if (!responsavelAtual.getCpf().equals(responsavel.getCpf()) && 
-            cpfJaExiste(responsavel.getCpf())) {
-            throw new RuntimeException("CPF já cadastrado: " + responsavel.getCpf());
-        }
-    
-        validarDadosResponsavel(responsavel);
-        
-        return responsavelRepository.save(responsavel);
+
+        if (dtoIn.getNome() != null) atual.setNome(dtoIn.getNome());
+        if (dtoIn.getTelefone() != null) atual.setTelefone(dtoIn.getTelefone());
+        if (dtoIn.getCpf() != null) atual.setCpf(dtoIn.getCpf());
+        if (dtoIn.getParentesco() != null) atual.setParentesco(dtoIn.getParentesco());
+
+        validarDadosResponsavel(dtoIn);
+        Responsavel salvo = responsavelRepository.save(atual);
+        return toDTO(salvo);
     }
 
     /**
      * Busca responsável por ID
      */
-    public Optional<Responsavel> buscarPorId(Long id) {
-        return responsavelRepository.findById(id);
+    @Transactional(readOnly = true)
+    public Optional<ResponsavelDtoOut> buscarPorId(Long id) {
+        return responsavelRepository.findById(id).map(this::toDTO);
     }
 
-    /**
-     * Busca responsável por CPF
-     */
-    public Optional<Responsavel> buscarPorCpf(String cpf) {
-        return responsavelRepository.findByCpf(cpf);
+    @Transactional(readOnly = true)
+    public Optional<ResponsavelDtoOut> buscarPorCpf(String cpf) {
+        return responsavelRepository.findByCpf(cpf).map(this::toDTO);
     }
 
-
-
-    /**
-     * Busca responsáveis por nome (busca parcial)
-     */
-    public List<Responsavel> buscarPorNome(String nome) {
-        return responsavelRepository.findByNomeContainingIgnoreCase(nome);
+    @Transactional(readOnly = true)
+    public List<ResponsavelDtoOut> listarTodos() {
+        return responsavelRepository.findAll().stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
-    /**
-     * Busca responsáveis por telefone (busca parcial)
-     */
-    public List<Responsavel> buscarPorTelefone(String telefone) {
-        return responsavelRepository.findByTelefoneContaining(telefone);
+    @Transactional(readOnly = true)
+    public List<ResponsavelDtoOut> buscarPorNome(String nome) {
+        return responsavelRepository.findByNomeContainingIgnoreCase(nome).stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
-
-    /**
-     * Lista todos os responsáveis
-     */
-    public List<Responsavel> listarTodos() {
-        return responsavelRepository.findAll();
+    @Transactional(readOnly = true)
+    public List<ResponsavelDtoOut> buscarPorTelefone(String telefone) {
+        return responsavelRepository.findByTelefoneContaining(telefone).stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
-
 
 
     /**
@@ -140,76 +145,25 @@ public class ResponsavelService {
     /**
      * Validações dos dados do responsável
      */
-    private void validarDadosResponsavel(Responsavel responsavel) {
-        if (responsavel.getNome() == null || responsavel.getNome().trim().isEmpty()) {
+    private void validarDadosResponsavel(ResponsavelDtoIn dtoIn) {
+        if (dtoIn.getNome() == null) {
             throw new IllegalArgumentException("Nome é obrigatório");
         }
         
-        if (responsavel.getNome().length() < 2) {
+        if (dtoIn.getNome().length() < 2) {
             throw new IllegalArgumentException("Nome deve ter pelo menos 2 caracteres");
         }
         
-        if (responsavel.getCpf() == null || responsavel.getCpf().trim().isEmpty()) {
+        if (dtoIn.getCpf() == null) {
             throw new IllegalArgumentException("CPF é obrigatório");
         }
         
-        if (!isCpfValido(responsavel.getCpf())) {
-            throw new IllegalArgumentException("CPF inválido");
-        }
-        
-        if (responsavel.getTelefone() != null && !responsavel.getTelefone().trim().isEmpty()) {
-            if (!isTelefoneValido(responsavel.getTelefone())) {
+        if (dtoIn.getTelefone() != null && !dtoIn.getTelefone().trim().isEmpty()) {
+            if (!isTelefoneValido(dtoIn.getTelefone())) {
                 throw new IllegalArgumentException("Telefone inválido");
             }
         }
     }
-
-    /**
-     * Valida CPF
-     */
-    private boolean isCpfValido(String cpf) {
-        // Remove caracteres não numéricos
-        cpf = cpf.replaceAll("[^0-9]", "");
-        
-        // Verifica se tem 11 dígitos
-        if (cpf.length() != 11) {
-            return false;
-        }
-        
-        // Verifica se todos os dígitos são iguais
-        if (cpf.matches("(\\d)\\1{10}")) {
-            return false;
-        }
-        
-        // Validação do algoritmo do CPF
-        try {
-            int[] digits = new int[11];
-            for (int i = 0; i < 11; i++) {
-                digits[i] = Integer.parseInt(cpf.substring(i, i + 1));
-            }
-            
-            // Primeiro dígito verificador
-            int sum = 0;
-            for (int i = 0; i < 9; i++) {
-                sum += digits[i] * (10 - i);
-            }
-            int firstDigit = 11 - (sum % 11);
-            if (firstDigit >= 10) firstDigit = 0;
-            
-            // Segundo dígito verificador
-            sum = 0;
-            for (int i = 0; i < 10; i++) {
-                sum += digits[i] * (11 - i);
-            }
-            int secondDigit = 11 - (sum % 11);
-            if (secondDigit >= 10) secondDigit = 0;
-            
-            return digits[9] == firstDigit && digits[10] == secondDigit;
-        } catch (NumberFormatException e) {
-            return false;
-        }
-    }
-
     /**
      * Valida telefone brasileiro
      */
@@ -221,37 +175,39 @@ public class ResponsavelService {
         return telefoneNumerico.length() == 10 || telefoneNumerico.length() == 11;
     }
 
+    public ResponsavelDtoOut adicionarAluno(Long responsavelId, Long alunoId, Boolean principal) {
+        Responsavel responsavel = responsavelRepository.findById(responsavelId)
+            .orElseThrow(() -> new RuntimeException("Responsável não encontrado com ID: " + responsavelId));
 
+        Aluno aluno = alunoRepository.findById(alunoId)
+            .orElseThrow(() -> new RuntimeException("Aluno não encontrado com ID: " + alunoId));
 
-    // Consultas com DTO
-    @Transactional(readOnly = true)
-    public Optional<ResponsavelDtoOut> buscarPorIdDto(Long id) {
-        return responsavelRepository.findById(id).map(this::toDTO);
-    }
+        Optional<AlunoResponsavel> relacaoExistente =
+            alunoResponsavelRepository.findByAlunoIdAndResponsavelId(alunoId, responsavelId);
+        if (relacaoExistente.isPresent()) {
+            throw new RuntimeException("Relacionamento já existe entre este aluno e responsável");
+        }
 
-    @Transactional(readOnly = true)
-    public Optional<ResponsavelDtoOut> buscarPorCpfDto(String cpf) {
-        return responsavelRepository.findByCpf(cpf).map(this::toDTO);
-    }
+        Boolean isPrincipal = principal != null ? principal : false;
 
-    @Transactional(readOnly = true)
-    public List<ResponsavelDtoOut> listarTodosDto() {
-        return responsavelRepository.findAll().stream()
-                .map(this::toDTO)
-                .collect(Collectors.toList());
-    }
+        if (isPrincipal) {
+            List<AlunoResponsavel> responsaveisPrincipais =
+                alunoResponsavelRepository.findByAlunoIdAndPrincipalTrue(alunoId);
+            if (!responsaveisPrincipais.isEmpty()) {
+                throw new RuntimeException("Aluno já possui um responsável principal");
+            }
+        }
 
-    @Transactional(readOnly = true)
-    public List<ResponsavelDtoOut> buscarPorNomeDto(String nome) {
-        return responsavelRepository.findByNomeContainingIgnoreCase(nome).stream()
-                .map(this::toDTO)
-                .collect(Collectors.toList());
-    }
+        AlunoResponsavel alunoResponsavel = new AlunoResponsavel();
+        alunoResponsavel.setAluno(aluno);
+        alunoResponsavel.setResponsavel(responsavel);
+        alunoResponsavel.setPrincipal(isPrincipal);
 
-    @Transactional(readOnly = true)
-    public List<ResponsavelDtoOut> buscarPorTelefoneDto(String telefone) {
-        return responsavelRepository.findByTelefoneContaining(telefone).stream()
-                .map(this::toDTO)
-                .collect(Collectors.toList());
+        alunoResponsavelRepository.save(alunoResponsavel);
+
+        // Mantém o objeto em memória consistente
+        responsavel.getResponsaveis().add(alunoResponsavel);
+
+        return toDTO(responsavel);
     }
 }

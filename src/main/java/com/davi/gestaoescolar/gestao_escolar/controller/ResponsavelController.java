@@ -6,7 +6,8 @@ import java.util.Optional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.davi.gestaoescolar.gestao_escolar.model.Responsavel;
+import com.davi.gestaoescolar.gestao_escolar.dto.Responsavel.ResponsavelDtoIn;
+import com.davi.gestaoescolar.gestao_escolar.dto.Responsavel.ResponsavelDtoOut;
 import com.davi.gestaoescolar.gestao_escolar.service.ResponsavelService;
 
 @RestController
@@ -20,32 +21,32 @@ public class ResponsavelController {
     }
 
     @PostMapping
-    public ResponseEntity<Responsavel> criar(@RequestBody Responsavel responsavel) {
-        Responsavel salvo = responsavelService.salvar(responsavel);
+    public ResponseEntity<ResponsavelDtoOut> criar(@RequestBody ResponsavelDtoIn dtoIn) {
+        ResponsavelDtoOut salvo = responsavelService.salvar(dtoIn);
         return ResponseEntity.ok(salvo);
     }
 
     @GetMapping
-    public ResponseEntity<List<Responsavel>> listar() {
-        List<Responsavel> responsaveis = responsavelService.listarTodos();
+    public ResponseEntity<List<ResponsavelDtoOut>> listar() {
+        List<ResponsavelDtoOut> responsaveis = responsavelService.listarTodos();
         return ResponseEntity.ok(responsaveis);
     }
 
     @GetMapping("/id/{id}")
-    public ResponseEntity<Optional<Responsavel>> buscarPorId(@PathVariable Long id) {
-        Optional<Responsavel> responsavel = responsavelService.buscarPorId(id);
+    public ResponseEntity<Optional<ResponsavelDtoOut>> buscarPorId(@PathVariable Long id) {
+        Optional<ResponsavelDtoOut> responsavel = responsavelService.buscarPorId(id);
         return ResponseEntity.ok(responsavel);
     }
 
     @GetMapping("/cpf/{cpf}")
-    public ResponseEntity<Optional<Responsavel>> buscarPorCpf(@PathVariable String cpf) {
-        Optional<Responsavel> responsavel = responsavelService.buscarPorCpf(cpf);
+    public ResponseEntity<Optional<ResponsavelDtoOut>> buscarPorCpf(@PathVariable String cpf) {
+        Optional<ResponsavelDtoOut> responsavel = responsavelService.buscarPorCpf(cpf);
         return ResponseEntity.ok(responsavel);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Responsavel> atualizar(@PathVariable Long id, @RequestBody Responsavel responsavel) {
-        Responsavel atualizado = responsavelService.atualizar(id, responsavel);
+    public ResponseEntity<ResponsavelDtoOut> atualizar(@PathVariable Long id, @RequestBody ResponsavelDtoIn dtoIn) {
+        ResponsavelDtoOut atualizado = responsavelService.atualizar(id, dtoIn);
         return ResponseEntity.ok(atualizado);
     }
 

@@ -38,12 +38,14 @@ public class Responsavel {
     // Construtores
     public Responsavel() {}
 
-    public Responsavel(String nome, String telefone, String cpf) {
+    public Responsavel(String nome, String telefone, String cpf, String parentesco){
         this.nome = nome;
         this.telefone = telefone;
         this.cpf = cpf;
-
+        this.parentesco = parentesco;
     }
+
+    
     
   
 }
